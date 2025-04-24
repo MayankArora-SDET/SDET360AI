@@ -1,10 +1,10 @@
 package com.sdet.sdet360.config;
 
 import com.zaxxer.hikari.HikariDataSource;
-import javax.sql.DataSource;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import javax.sql.DataSource;
 
 @Configuration
 public class DefaultDataSourceConfig {

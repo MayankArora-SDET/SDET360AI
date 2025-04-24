@@ -40,7 +40,17 @@ public abstract class BaseEntity {
         return id;
     }
 
-    // no setter for ID, since it's generated
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

@@ -1,14 +1,14 @@
 // src/main/java/com/sdet/sdet360/config/TenantRoutingDataSourceConfig.java
 package com.sdet.sdet360.config;
 
-import java.util.HashMap;
-import java.util.Map;
-import javax.sql.DataSource;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+
+import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 public class TenantRoutingDataSourceConfig {

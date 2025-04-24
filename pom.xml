@@ -14,6 +14,12 @@
 	<name>sdet360</name>
 	<description>AI Based Automation tool</description>
 	<url/>
+	<repositories>
+		<repository>
+			<id>atlassian-public</id>
+			<url>https://packages.atlassian.com/maven/repository/public</url>
+		</repository>
+	</repositories>
 	<licenses>
 		<license/>
 	</licenses>
@@ -45,6 +51,15 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.atlassian.jira</groupId>
+			<artifactId>jira-rest-java-client-core</artifactId>
+			<version>5.2.6</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -107,7 +122,9 @@
 		   <artifactId>jakarta.validation-api</artifactId>
 		   <version>2.0.2</version>
 	   </dependency>
+
   </dependencies>
+
 
 	<build>
 		<plugins>

@@ -3,8 +3,6 @@ package com.sdet.sdet360.master.controller;
 
 import com.sdet.sdet360.master.entity.Tenant;
 import com.sdet.sdet360.master.service.TenantService;
-
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
