@@ -1,9 +1,9 @@
 package com.sdet.sdet360.tenant.service;
 
-import com.sdet.sdet360.tenant.model.Vertical;
 import com.sdet.sdet360.tenant.model.User;
-import com.sdet.sdet360.tenant.repository.VerticalRepository;
+import com.sdet.sdet360.tenant.model.Vertical;
 import com.sdet.sdet360.tenant.repository.UserRepository;
+import com.sdet.sdet360.tenant.repository.VerticalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

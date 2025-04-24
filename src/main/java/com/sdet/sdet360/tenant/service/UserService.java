@@ -1,9 +1,7 @@
 package com.sdet.sdet360.tenant.service;
 
-import com.sdet.sdet360.master.entity.Tenant;
 import com.sdet.sdet360.tenant.model.User;
 import com.sdet.sdet360.tenant.repository.UserRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -61,4 +59,5 @@ public class UserService {
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
+    
 }

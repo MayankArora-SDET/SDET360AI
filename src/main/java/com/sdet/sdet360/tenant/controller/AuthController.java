@@ -1,7 +1,7 @@
 package com.sdet.sdet360.tenant.controller;
 
 import com.sdet.sdet360.config.TenantContextHolder;
-import com.sdet.sdet360.tenant.auth.*;
+import com.sdet.sdet360.tenant.auth.JwtTokenProvider;
 import com.sdet.sdet360.tenant.payload.JwtAuthenticationResponse;
 import com.sdet.sdet360.tenant.payload.LoginRequest;
 import org.slf4j.Logger;
@@ -17,9 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
-
 import javax.validation.Valid;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")

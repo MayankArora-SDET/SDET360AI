@@ -1,5 +1,7 @@
 package com.sdet.sdet360.config;
-import com.sdet.sdet360.tenant.auth.*;
+
+import com.sdet.sdet360.tenant.auth.JwtAuthenticationEntryPoint;
+import com.sdet.sdet360.tenant.auth.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

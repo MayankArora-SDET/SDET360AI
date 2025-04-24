@@ -1,11 +1,7 @@
 package com.sdet.sdet360.tenant.model;
 
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "projects")
@@ -20,4 +16,35 @@ public class Project extends BaseEntity {
     
     @Column(name = "project_name")
     private String projectName;
+
+    public Project() {
+    }
+//
+//    public Project(){
+//
+//    }
+
+    public String getProjectKey() {
+        return projectKey;
+    }
+
+    public void setProjectKey(String projectKey) {
+        this.projectKey = projectKey;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public Vertical getVertical() {
+        return vertical;
+    }
+
+    public void setVertical(Vertical vertical) {
+        this.vertical = vertical;
+    }
 }

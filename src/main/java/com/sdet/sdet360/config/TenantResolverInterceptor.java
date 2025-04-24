@@ -1,18 +1,16 @@
 package com.sdet.sdet360.config;
 
+import com.sdet.sdet360.master.entity.Tenant;
+import com.sdet.sdet360.master.repository.TenantRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import java.util.Optional;
-import java.util.UUID;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import com.sdet.sdet360.master.entity.Tenant;
-import com.sdet.sdet360.master.repository.TenantRepository;
+import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class TenantResolverInterceptor implements HandlerInterceptor {

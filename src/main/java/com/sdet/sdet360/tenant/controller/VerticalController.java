@@ -1,8 +1,8 @@
 package com.sdet.sdet360.tenant.controller;
 
+import com.sdet.sdet360.tenant.auth.TenantAwareUserDetails;
 import com.sdet.sdet360.tenant.model.Vertical;
 import com.sdet.sdet360.tenant.service.VerticalService;
-import com.sdet.sdet360.tenant.auth.TenantAwareUserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
