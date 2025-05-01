@@ -1,0 +1,58 @@
+# =============================
+# Global for sdet360 repo
+# =============================
+
+# macOS files
+.DS_Store
+
+# Windows files
+Thumbs.db
+
+# Logs
+*.log
+
+# IDEs and editors
+/.idea/
+.vscode/
+*.iml
+
+# =============================
+# Python - ai-service
+# =============================
+/ai-service/.venv/
+/ai-service/venv/
+/ai-service/env/
+/ai-service/__pycache__/
+/ai-service/*.py[cod]
+/ai-service/*.pyo
+/ai-service/build/
+/ai-service/dist/
+/ai-service/*.egg-info
+
+# Byte-compiled files
+*.pyc
+*$py.class
+
+# Distribution
+build/
+dist/
+*.egg-info/
+
+# =============================
+# Java - springboot-service
+# =============================
+/springboot-service/target/
+/springboot-service/*.jar
+/springboot-service/*.war
+*.class
+
+# Maven
+/springboot-service/.mvn/
+/springboot-service/mvnw
+/springboot-service/mvnw.cmd
+
+# Gradle
+/springboot-service/.gradle/
+/springboot-service/gradlew
+/springboot-service/gradlew.bat
+/springboot-service/build/

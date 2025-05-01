@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package ai.sdet360;
+
+option java_multiple_files = true;
+option java_package = "com.sdet.sdet360.grpc.generated";
+option java_outer_classname = "AiServiceProto";
+
+service AiService {
+  rpc GenerateResponse (AiRequest) returns (AiResponse) {}
+  rpc ProcessDocument (DocumentRequest) returns (DocumentResponse) {}
+}
+
+message AiRequest {
+  string prompt = 1;
+  string tenant_id = 2;
+  map<string, string> parameters = 3;
+}
+
+message AiResponse {
+  string response_text = 1;
+  float confidence_score = 2;
+  map<string, string> metadata = 3;
+}
+
+message DocumentRequest {
+  string document_content = 1;
+  string tenant_id = 2;
+  string document_type = 3;
+}
+
+message DocumentResponse {
+  string processed_content = 1;
+  repeated Extraction extractions = 2;
+  string status = 3;
+}
+
+message Extraction {
+  string field_name = 1;
+  string field_value = 2;
+  float confidence = 3;
+}
