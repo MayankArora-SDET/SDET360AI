@@ -176,11 +176,23 @@ public class JiraApiService {
         }
         List<String> keys = new ArrayList<>();
         StringBuilder descBuilder = new StringBuilder();
+
         for (JsonNode iss : issues) {
+            System.out.println("ISSUE JSON: " + iss.toPrettyString());  // Print full JSON node
+
             keys.add(iss.get("key").asText());
-            descBuilder.append(iss.get("fields").path("description").asText(""));
+
+            JsonNode fieldsNode = iss.get("fields");
+            if (fieldsNode == null) {
+                System.out.println("Missing 'fields' in issue: " + iss.toPrettyString());
+                continue; // skip this issue
+            }
+
+            String description = fieldsNode.path("description").asText("");
+            descBuilder.append(description);
         }
-       String templateToUse;
+
+        String templateToUse;
         if (templateName != null && !templateName.isBlank()) {
             templateToUse = templateName;
         } else {

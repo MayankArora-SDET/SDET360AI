@@ -77,6 +77,68 @@ public final class AiServiceGrpc {
     return getProcessDocumentMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest,
+      com.sdet.sdet360.grpc.generated.AiResponse> getGenerateApiTestingScenariosMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "GenerateApiTestingScenarios",
+      requestType = com.sdet.sdet360.grpc.generated.AiRequest.class,
+      responseType = com.sdet.sdet360.grpc.generated.AiResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest,
+      com.sdet.sdet360.grpc.generated.AiResponse> getGenerateApiTestingScenariosMethod() {
+    io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest, com.sdet.sdet360.grpc.generated.AiResponse> getGenerateApiTestingScenariosMethod;
+    if ((getGenerateApiTestingScenariosMethod = AiServiceGrpc.getGenerateApiTestingScenariosMethod) == null) {
+      synchronized (AiServiceGrpc.class) {
+        if ((getGenerateApiTestingScenariosMethod = AiServiceGrpc.getGenerateApiTestingScenariosMethod) == null) {
+          AiServiceGrpc.getGenerateApiTestingScenariosMethod = getGenerateApiTestingScenariosMethod =
+              io.grpc.MethodDescriptor.<com.sdet.sdet360.grpc.generated.AiRequest, com.sdet.sdet360.grpc.generated.AiResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "GenerateApiTestingScenarios"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.sdet.sdet360.grpc.generated.AiRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.sdet.sdet360.grpc.generated.AiResponse.getDefaultInstance()))
+              .setSchemaDescriptor(new AiServiceMethodDescriptorSupplier("GenerateApiTestingScenarios"))
+              .build();
+        }
+      }
+    }
+    return getGenerateApiTestingScenariosMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest,
+      com.sdet.sdet360.grpc.generated.AiResponse> getGenerateJiraStoriesMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "GenerateJiraStories",
+      requestType = com.sdet.sdet360.grpc.generated.AiRequest.class,
+      responseType = com.sdet.sdet360.grpc.generated.AiResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest,
+      com.sdet.sdet360.grpc.generated.AiResponse> getGenerateJiraStoriesMethod() {
+    io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest, com.sdet.sdet360.grpc.generated.AiResponse> getGenerateJiraStoriesMethod;
+    if ((getGenerateJiraStoriesMethod = AiServiceGrpc.getGenerateJiraStoriesMethod) == null) {
+      synchronized (AiServiceGrpc.class) {
+        if ((getGenerateJiraStoriesMethod = AiServiceGrpc.getGenerateJiraStoriesMethod) == null) {
+          AiServiceGrpc.getGenerateJiraStoriesMethod = getGenerateJiraStoriesMethod =
+              io.grpc.MethodDescriptor.<com.sdet.sdet360.grpc.generated.AiRequest, com.sdet.sdet360.grpc.generated.AiResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "GenerateJiraStories"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.sdet.sdet360.grpc.generated.AiRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.sdet.sdet360.grpc.generated.AiResponse.getDefaultInstance()))
+              .setSchemaDescriptor(new AiServiceMethodDescriptorSupplier("GenerateJiraStories"))
+              .build();
+        }
+      }
+    }
+    return getGenerateJiraStoriesMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -138,6 +200,20 @@ public final class AiServiceGrpc {
         io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.DocumentResponse> responseObserver) {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getProcessDocumentMethod(), responseObserver);
     }
+
+    /**
+     */
+    default void generateApiTestingScenarios(com.sdet.sdet360.grpc.generated.AiRequest request,
+        io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getGenerateApiTestingScenariosMethod(), responseObserver);
+    }
+
+    /**
+     */
+    default void generateJiraStories(com.sdet.sdet360.grpc.generated.AiRequest request,
+        io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getGenerateJiraStoriesMethod(), responseObserver);
+    }
   }
 
   /**
@@ -182,6 +258,22 @@ public final class AiServiceGrpc {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getProcessDocumentMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void generateApiTestingScenarios(com.sdet.sdet360.grpc.generated.AiRequest request,
+        io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getGenerateApiTestingScenariosMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void generateJiraStories(com.sdet.sdet360.grpc.generated.AiRequest request,
+        io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getGenerateJiraStoriesMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -212,6 +304,20 @@ public final class AiServiceGrpc {
     public com.sdet.sdet360.grpc.generated.DocumentResponse processDocument(com.sdet.sdet360.grpc.generated.DocumentRequest request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getProcessDocumentMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.sdet.sdet360.grpc.generated.AiResponse generateApiTestingScenarios(com.sdet.sdet360.grpc.generated.AiRequest request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getGenerateApiTestingScenariosMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.sdet.sdet360.grpc.generated.AiResponse generateJiraStories(com.sdet.sdet360.grpc.generated.AiRequest request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getGenerateJiraStoriesMethod(), getCallOptions(), request);
     }
   }
 
@@ -246,10 +352,28 @@ public final class AiServiceGrpc {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getProcessDocumentMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.sdet.sdet360.grpc.generated.AiResponse> generateApiTestingScenarios(
+        com.sdet.sdet360.grpc.generated.AiRequest request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getGenerateApiTestingScenariosMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.sdet.sdet360.grpc.generated.AiResponse> generateJiraStories(
+        com.sdet.sdet360.grpc.generated.AiRequest request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getGenerateJiraStoriesMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_GENERATE_RESPONSE = 0;
   private static final int METHODID_PROCESS_DOCUMENT = 1;
+  private static final int METHODID_GENERATE_API_TESTING_SCENARIOS = 2;
+  private static final int METHODID_GENERATE_JIRA_STORIES = 3;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -275,6 +399,14 @@ public final class AiServiceGrpc {
         case METHODID_PROCESS_DOCUMENT:
           serviceImpl.processDocument((com.sdet.sdet360.grpc.generated.DocumentRequest) request,
               (io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.DocumentResponse>) responseObserver);
+          break;
+        case METHODID_GENERATE_API_TESTING_SCENARIOS:
+          serviceImpl.generateApiTestingScenarios((com.sdet.sdet360.grpc.generated.AiRequest) request,
+              (io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse>) responseObserver);
+          break;
+        case METHODID_GENERATE_JIRA_STORIES:
+          serviceImpl.generateJiraStories((com.sdet.sdet360.grpc.generated.AiRequest) request,
+              (io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -308,6 +440,20 @@ public final class AiServiceGrpc {
               com.sdet.sdet360.grpc.generated.DocumentRequest,
               com.sdet.sdet360.grpc.generated.DocumentResponse>(
                 service, METHODID_PROCESS_DOCUMENT)))
+        .addMethod(
+          getGenerateApiTestingScenariosMethod(),
+          io.grpc.stub.ServerCalls.asyncUnaryCall(
+            new MethodHandlers<
+              com.sdet.sdet360.grpc.generated.AiRequest,
+              com.sdet.sdet360.grpc.generated.AiResponse>(
+                service, METHODID_GENERATE_API_TESTING_SCENARIOS)))
+        .addMethod(
+          getGenerateJiraStoriesMethod(),
+          io.grpc.stub.ServerCalls.asyncUnaryCall(
+            new MethodHandlers<
+              com.sdet.sdet360.grpc.generated.AiRequest,
+              com.sdet.sdet360.grpc.generated.AiResponse>(
+                service, METHODID_GENERATE_JIRA_STORIES)))
         .build();
   }
 
@@ -358,6 +504,8 @@ public final class AiServiceGrpc {
               .setSchemaDescriptor(new AiServiceFileDescriptorSupplier())
               .addMethod(getGenerateResponseMethod())
               .addMethod(getProcessDocumentMethod())
+              .addMethod(getGenerateApiTestingScenariosMethod())
+              .addMethod(getGenerateJiraStoriesMethod())
               .build();
         }
       }

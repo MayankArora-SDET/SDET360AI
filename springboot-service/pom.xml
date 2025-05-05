@@ -163,6 +163,13 @@
 			<artifactId>protobuf-java</artifactId>
 			<version>${protobuf.version}</version>
 		</dependency>
+
+		<!-- PDF processing	-->
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+			<version>3.0.5</version>
+		</dependency>
   </dependencies>
 
 

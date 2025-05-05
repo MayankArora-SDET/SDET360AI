@@ -185,6 +185,7 @@ public class JiraProjectController {
         if (issueType != null && !issueType.isBlank()) {
             jql += " AND issuetype=\"" + issueType + "\"";
         }
+        System.out.printf("server name", vertical.getJiraServerUrl());
         Map<String, Object> resp = jiraApiService.searchIssues(
                 vertical.getJiraServerUrl(),
                 vertical.getJiraUsername(),

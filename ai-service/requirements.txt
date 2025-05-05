@@ -10,4 +10,5 @@ pydantic>=2.7.4,<3.0.0
 groq==0.23.1
 ollama==0.3.3
 langchain-core==0.3.56
+grpcio-tools==1.71.0
 langchain-ollama>=0.2.0,<1.0.0

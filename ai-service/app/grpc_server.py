@@ -45,6 +45,141 @@ class AiServiceServicer(ai_service_pb2_grpc.AiServiceServicer):
             metadata         = metadata
         )
 
+    def GenerateApiTestingScenarios(self, request, context):
+        logging.info(f"Received API testing gRPC request: {request}")
+        
+        url = request.parameters.get("url", "")
+        method = request.parameters.get("method", "GET")
+        params = request.parameters.get("params", "[]")
+        headers = request.parameters.get("headers", "[]")
+        body = request.parameters.get("body", "None")
+        
+        metadata = {"template_name": "API_TESTING_SCENARIOS"}
+        
+        # Format parameters and headers similar to the reference implementation
+        try:
+            import json
+            params_list = json.loads(params)
+            headers_list = json.loads(headers)
+            
+            param_details = "\n".join([f"- {param.get('key')}: {param.get('value')} ({param.get('description')})" 
+                                       for param in params_list]) if params_list else "None"
+            header_details = "\n".join([f"- {header.get('key')}: {header.get('value')} ({header.get('description')})" 
+                                        for header in headers_list]) if headers_list else "None"
+        except Exception as e:
+            logging.error(f"Error parsing params or headers: {e}")
+            param_details = "None"
+            header_details = "None"
+        
+        prompt = f"""
+I have to test the API with the following details:
+
+- URL: {url}
+- HTTP Method: {method}
+
+Please share all the possible scenarios to test this endpoint, considering:
+1. **Data Testing**: Validate input boundary conditions, data types, required fields, empty or null values, special characters, and maximum field lengths across all parameters, headers, and body fields.
+   - **Query Parameters**: {param_details}
+   - **Headers**: {header_details}
+2. **Security Testing**:
+    - **Authentication and Authorization**: Include cases for missing, invalid, and expired tokens or credentials (if applicable).
+    - **Injection Attacks**: SQL Injection, XSS, and other potential vulnerabilities.
+    - **Data Sensitivity**: Ensure sensitive data is not exposed in error messages or response bodies.
+3. **Functional Testing**:
+    - **Positive Cases**: Scenarios that cover expected inputs and responses, ensuring successful requests.
+    - **Negative Cases**: Include missing fields, invalid field values, and edge cases for optional fields.
+4. **Load and Performance Testing**: Consider scenarios to test the API under load, such as large payloads, high request frequency, and any other performance-sensitive factors.
+
+Return these test scenarios in a format compatible with Postman, including expected input values, response status codes (e.g., 200, 400, 401), and validation checks on the response body fields.
+
+Example Inputs:
+- **Query Parameters**: {param_details}
+- **Headers**: {header_details}
+- **Body**: {body if body != "None" else "None"}
+"""
+        
+        logging.info(f"Using API testing prompt: {prompt}")
+        model = request.parameters.get("model", "grok")
+        client = LLMClientFactory.get_client(model)
+        try:
+            ai_text = client.chat([{"role": "user", "content": prompt}])
+        except Exception as e:
+            logging.error(f"LLM call error: {e}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            return ai_service_pb2.AiResponse(metadata=metadata)
+        
+        return ai_service_pb2.AiResponse(
+            response_text=ai_text,
+            confidence_score=1.0,
+            metadata=metadata
+        )
+    
+    def GenerateJiraStories(self, request, context):
+        logging.info(f"Received Jira stories generation gRPC request: {request}")
+        
+        srs_text = request.parameters.get("srs_text", "")
+        if not srs_text:
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("SRS text is required")
+            return ai_service_pb2.AiResponse(metadata={"template_name": "JIRA_STORIES"})
+        
+        metadata = {"template_name": "JIRA_STORIES"}
+        
+        prompt = f"""Generate Jira stories in ordered list from the following extracted SRS (Software Requirements Specification) text:
+
+{srs_text}
+
+For each requirement, please create a well-structured Jira story with:
+
+1. **Epic**: Categorize the story under an appropriate epic
+2. **Story Title**: Clear, concise title starting with "As a..."
+3. **Description**: Detailed explanation of the requirement
+4. **Acceptance Criteria**: Specific, testable conditions that must be met
+5. **Priority**: High/Medium/Low based on business impact and technical complexity
+6. **Story Points**: Estimate of effort (1, 2, 3, 5, 8, 13)
+
+Format each story as follows:
+
+---
+## Epic: [Epic Name]
+### Story: [Story Title]
+**Description:**
+[Detailed description]
+
+**Acceptance Criteria:**
+- [Criterion 1]
+- [Criterion 2]
+- [Criterion n]
+
+**Priority:** [Priority Level]
+**Story Points:** [Estimate]
+---
+
+Ensure that:
+- Each story is independent and testable
+- The acceptance criteria are specific and measurable
+- Technical implementation details are minimized in favor of business requirements
+- Non-functional requirements (performance, security, etc.) are captured as separate stories
+"""
+        
+        logging.info(f"Using Jira stories generation prompt")
+        model = request.parameters.get("model", "ollama")
+        client = LLMClientFactory.get_client(model)
+        try:
+            ai_text = client.chat([{"role": "user", "content": prompt}])
+        except Exception as e:
+            logging.error(f"LLM call error: {e}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            return ai_service_pb2.AiResponse(metadata=metadata)
+        
+        return ai_service_pb2.AiResponse(
+            response_text=ai_text,
+            confidence_score=1.0,
+            metadata=metadata
+        )
+    
     def ProcessDocument(self, request, context):
         return ai_service_pb2.DocumentResponse(
             processed_content=f"Processed: {request.document_content}",

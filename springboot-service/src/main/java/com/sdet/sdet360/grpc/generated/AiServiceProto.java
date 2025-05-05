@@ -84,13 +84,17 @@ public final class AiServiceProto {
       "ontent\030\001 \001(\t\022+\n\013extractions\030\002 \003(\0132\026.ai.s" +
       "det360.Extraction\022\016\n\006status\030\003 \001(\t\"I\n\nExt" +
       "raction\022\022\n\nfield_name\030\001 \001(\t\022\023\n\013field_val" +
-      "ue\030\002 \001(\t\022\022\n\nconfidence\030\003 \001(\0022\240\001\n\tAiServi" +
+      "ue\030\002 \001(\t\022\022\n\nconfidence\030\003 \001(\0022\270\002\n\tAiServi" +
       "ce\022C\n\020GenerateResponse\022\025.ai.sdet360.AiRe" +
       "quest\032\026.ai.sdet360.AiResponse\"\000\022N\n\017Proce" +
       "ssDocument\022\033.ai.sdet360.DocumentRequest\032" +
-      "\034.ai.sdet360.DocumentResponse\"\000B3\n\037com.s" +
-      "det.sdet360.grpc.generatedB\016AiServicePro" +
-      "toP\001b\006proto3"
+      "\034.ai.sdet360.DocumentResponse\"\000\022N\n\033Gener" +
+      "ateApiTestingScenarios\022\025.ai.sdet360.AiRe" +
+      "quest\032\026.ai.sdet360.AiResponse\"\000\022F\n\023Gener" +
+      "ateJiraStories\022\025.ai.sdet360.AiRequest\032\026." +
+      "ai.sdet360.AiResponse\"\000B3\n\037com.sdet.sdet" +
+      "360.grpc.generatedB\016AiServiceProtoP\001b\006pr" +
+      "oto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
