@@ -1,8 +1,10 @@
 package com.sdet.sdet360.tenant.auth;
 
 import io.jsonwebtoken.*;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,9 @@ public class JwtTokenProvider {
 
     @Value("${app.jwt.expiration}")
     private int jwtExpirationInMs;
+
+    @Autowired
+    private JwtCookieManager jwtCookieManager;
 
     public String generateToken(Authentication authentication, UUID tenantId) {
         TenantAwareUserDetails userPrincipal = (TenantAwareUserDetails) authentication.getPrincipal();
@@ -37,6 +42,15 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    /**
+     * Generate token and set it in the HTTP response as a cookie
+     */
+    public String generateTokenAndSetCookie(Authentication authentication, UUID tenantId, HttpServletResponse response) {
+        String token = generateToken(authentication, tenantId);
+        jwtCookieManager.addTokenCookie(response, token);
+        return token;
+    }
+
     public String getUsernameFromJWT(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(jwtSecret)
@@ -45,7 +59,7 @@ public class JwtTokenProvider {
 
         return claims.getSubject();
     }
-    
+
     public UUID getTenantIdFromJWT(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(jwtSecret)

@@ -1,11 +1,11 @@
 package com.sdet.sdet360.tenant.controller;
 
 import com.sdet.sdet360.config.TenantContextHolder;
+import com.sdet.sdet360.tenant.auth.JwtCookieManager;
 import com.sdet.sdet360.tenant.auth.JwtTokenProvider;
 import com.sdet.sdet360.tenant.payload.JwtAuthenticationResponse;
 import com.sdet.sdet360.tenant.payload.LoginRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,7 +23,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -31,24 +30,37 @@ public class AuthController {
     @Autowired
     private JwtTokenProvider tokenProvider;
 
+    @Autowired
+    private JwtCookieManager jwtCookieManager;
+
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) { 
-        UUID tenantId = TenantContextHolder.getTenantId();
-        
-        logger.info("Login attempt for user: {} in tenant: {}", loginRequest.getUsername(), tenantId);
-        
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,
+                                              HttpServletResponse response) {
+        // Authenticate user
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                loginRequest.getUsername(),
-                loginRequest.getPassword()
-            )
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
+                )
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = tokenProvider.generateToken(authentication, tenantId);
-        logger.info("Successfully authenticated user: {}", loginRequest.getUsername());
-        
+        // Get current tenant ID
+        UUID tenantId = TenantContextHolder.getTenantId();
+
+        // Generate JWT token and set it as a cookie
+        String jwt = tokenProvider.generateTokenAndSetCookie(authentication, tenantId, response);
+
+        // Return the token in response body as well for API clients
         return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logoutUser(HttpServletResponse response) {
+        // Clear the JWT cookie
+        jwtCookieManager.clearTokenCookie(response);
+
+        return ResponseEntity.ok().body("You have been logged out successfully");
     }
 }

@@ -28,17 +28,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private TenantAwareUserDetailsService userDetailsService;
 
+    @Autowired
+    private JwtCookieManager jwtCookieManager;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            String jwt = getJwtFromRequest(request);
+            // Use the JwtCookieManager to get JWT from cookie or header
+            String jwt = jwtCookieManager.getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 String username = tokenProvider.getUsernameFromJWT(jwt);
                 UUID tenantId = tokenProvider.getTenantIdFromJWT(jwt);
 
-                // Update this section
+                // Update tenant context
                 UUID currentTenantId = TenantContextHolder.getTenantId();
                 if (!currentTenantId.equals(tenantId)) {
                     logger.warn("Tenant mismatch between token ({}) and context ({})", tenantId, currentTenantId);
@@ -57,13 +61,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
     }
 }
