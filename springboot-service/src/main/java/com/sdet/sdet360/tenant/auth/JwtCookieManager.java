@@ -45,7 +45,7 @@ public class JwtCookieManager {
     public void clearTokenCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie(JWT_COOKIE_NAME, "");
         cookie.setMaxAge(0);
-        cookie.setHttpOnly(true);
+        cookie.setHttpOnly(false);
         cookie.setSecure(secureCookie);
         cookie.setPath(cookiePath);
 
