@@ -2,6 +2,7 @@ package com.sdet.sdet360;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.ComponentScan;
     "com.sdet.sdet360.tenant.controller",
     "com.sdet.sdet360.grpc"
 })
+@ConfigurationPropertiesScan
 public class Sdet360Application {
 
 	public static void main(String[] args) {

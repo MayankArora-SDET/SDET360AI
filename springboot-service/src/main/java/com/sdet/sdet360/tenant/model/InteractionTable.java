@@ -23,4 +23,52 @@ public class InteractionTable extends BaseEntity {
     
     @Column(name = "url")
     private String url;
+
+    public InteractionTable(Feature feature, UUID testcaseId, String description, String category, String url) {
+        this.feature = feature;
+        this.testcaseId = testcaseId;
+        this.description = description;
+        this.category = category;
+        this.url = url;
+    }
+
+    public Feature getFeature() {
+        return feature;
+    }
+
+    public void setFeature(Feature feature) {
+        this.feature = feature;
+    }
+
+    public UUID getTestcaseId() {
+        return testcaseId;
+    }
+
+    public void setTestcaseId(UUID testcaseId) {
+        this.testcaseId = testcaseId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
 }
