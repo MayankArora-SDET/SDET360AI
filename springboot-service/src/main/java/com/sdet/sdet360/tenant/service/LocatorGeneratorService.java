@@ -1,5 +1,6 @@
 package com.sdet.sdet360.tenant.service;
 
+import com.sdet.sdet360.tenant.model.Vertical;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,6 +25,11 @@ public class LocatorGeneratorService {
         return extractLocators(doc, tool);
     }
 
+    public Map<String, String> extractLocatorsFromHtml(Vertical vertical, String html, String tool) {
+        // Use vertical context if needed
+        return extractLocatorsFromHtml(html, tool);
+    }
+
     public Map<String, String> extractLocatorsFromUrl(String url, String tool) {
         try {
             Document doc = Jsoup.connect(url)
@@ -34,6 +40,11 @@ public class LocatorGeneratorService {
             logger.error("Error fetching URL {}: {}", url, e.getMessage());
             throw new RuntimeException("Error fetching URL: " + e.getMessage(), e);
         }
+    }
+
+    public Map<String, String> extractLocatorsFromUrl(Vertical vertical, String url, String tool) {
+        // Use vertical context if needed
+        return extractLocatorsFromUrl(url, tool);
     }
 
     private Map<String, String> extractLocators(Document doc, String tool) {
