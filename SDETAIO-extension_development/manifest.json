@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "Record script",
+    "version": "2.0",
+    "description": "Record script",
+    "permissions": [
+        "scripting",
+        "tabs",
+        "activeTab",
+        "storage",
+        "alarms"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "host_permissions": [
+        "http://127.0.0.1:5000/",
+        "https://*/*"
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": "icon128.png"
+    },
+    "icons": {
+        "128": "icon128.png"
+    },
+    "externally_connectable": {
+        "matches": [
+            "http://127.0.0.1:5000/"
+        ]
+    }
+}

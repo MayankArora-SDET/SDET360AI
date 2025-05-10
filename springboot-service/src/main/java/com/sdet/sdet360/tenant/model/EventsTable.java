@@ -1,9 +1,18 @@
 package com.sdet.sdet360.tenant.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "event_tables")
+@AttributeOverride(name = "id", column = @Column(name = "event_id"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class EventsTable extends BaseEntity {
     
     @ManyToOne
@@ -18,7 +27,19 @@ public class EventsTable extends BaseEntity {
     
     @Column(name = "relational_xpath")
     private String relationalXpath;
-    
+
+    @Column(name = "action")
+    private String Action;
+    @Column(name = "type")
+    private String Type;
+    @Column(name = "value")
+    private String Value;
+    @Column(name = "assertion")
+    private Boolean Assertion;
     @Column(name = "is_modified")
     private Boolean isModified;
-  }
+
+
+
+
+}
