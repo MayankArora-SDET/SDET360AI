@@ -10,7 +10,7 @@ import org.springframework.util.StringUtils;
 @Component
 public class JwtCookieManager {
 
-    private static final String JWT_COOKIE_NAME = "jwt";
+    private static final String JWT_COOKIE_NAME = "session";
 
     @Value("${app.jwt.expiration}")
     private int jwtExpirationInMs;

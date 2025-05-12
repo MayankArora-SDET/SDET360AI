@@ -3,6 +3,7 @@ package com.sdet.sdet360.tenant.controller;
 import com.sdet.sdet360.config.TenantContextHolder;
 import com.sdet.sdet360.tenant.auth.JwtCookieManager;
 import com.sdet.sdet360.tenant.auth.JwtTokenProvider;
+import com.sdet.sdet360.tenant.auth.TenantAwareUserDetails;
 import com.sdet.sdet360.tenant.payload.JwtAuthenticationResponse;
 import com.sdet.sdet360.tenant.payload.LoginRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -49,11 +50,15 @@ public class AuthController {
         // Get current tenant ID
         UUID tenantId = TenantContextHolder.getTenantId();
 
+        // Extract user ID from authentication object
+        TenantAwareUserDetails userDetails = (TenantAwareUserDetails) authentication.getPrincipal();
+        UUID userId = userDetails.getId();
+
         // Generate JWT token and set it as a cookie
         String jwt = tokenProvider.generateTokenAndSetCookie(authentication, tenantId, response);
 
-        // Return the token in response body as well for API clients
-        return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
+        // Return the token in response body along with userId for API clients
+        return ResponseEntity.ok(new JwtAuthenticationResponse(jwt, userId));
     }
 
     @PostMapping("/logout")
