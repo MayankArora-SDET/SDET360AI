@@ -96,6 +96,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Return true to indicate the response will be sent asynchronously
         return true;
     }
+    
+    // Handle API requests from content script to bypass ad blockers
+    if (message.action === "sendApiRequest") {
+        console.log("Background script handling API request:", message);
+        
+        fetch(message.url, {
+            method: message.method,
+            headers: {
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            body: JSON.stringify(message.data)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("API request successful:", data);
+                sendResponse({ success: true, data: data });
+            })
+            .catch(error => {
+                console.error("API request failed:", error);
+                sendResponse({ success: false, error: error.toString() });
+            });
+        
+        // Return true to indicate the response will be sent asynchronously
+        return true;
+    }
 });
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {

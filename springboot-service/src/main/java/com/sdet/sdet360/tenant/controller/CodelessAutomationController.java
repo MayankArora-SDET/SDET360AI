@@ -4,6 +4,7 @@ import com.sdet.sdet360.tenant.dto.*;
 import com.sdet.sdet360.tenant.exception.TokenGenerationException;
 import com.sdet.sdet360.tenant.exception.TokenValidationException;
 import com.sdet.sdet360.tenant.service.CodelessAutomation;
+import com.sdet.sdet360.tenant.service.SeleniumTestExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +24,11 @@ public class CodelessAutomationController {
 
     private static final Logger logger = LoggerFactory.getLogger(CodelessAutomationController.class);
     private final CodelessAutomation codelessAutomation;
+    private final SeleniumTestExecutor seleniumTestExecutor;
 
-    public CodelessAutomationController(CodelessAutomation codelessAutomation) {
+    public CodelessAutomationController(CodelessAutomation codelessAutomation, SeleniumTestExecutor seleniumTestExecutor) {
         this.codelessAutomation = codelessAutomation;
+        this.seleniumTestExecutor = seleniumTestExecutor;
     }
 
     /**
@@ -77,25 +80,103 @@ public class CodelessAutomationController {
     /**
      * Get recorded test cases with optional category filtering
      *
-     * @param verticalId UUID of the vertical
+     * @param verticalId Vertical ID
      * @param category Optional category filter
-     * @return List of test cases
+     * @return List of test cases with their associated events
      */
-    @GetMapping("/recorded-test-cases")
-    public ResponseEntity<Map<String, List<TestCaseResponseDto>>> getRecordedTestCases(
+    @GetMapping("/{verticalId}/recorded-test-cases")
+    public ResponseEntity<Map<String, List<TestCaseWithEventsDto>>> getRecordedTestCases(
             @PathVariable UUID verticalId, @RequestParam(required = false) String category) {
 
         logger.info("Controller: Retrieving test cases with category filter: {}", category);
 
-        List<TestCaseResponseDto> testCasesList = codelessAutomation.getRecordedTestCases(category);
+        List<TestCaseWithEventsDto> testCasesWithEvents = codelessAutomation.getRecordedTestCases(category);
 
-        return ResponseEntity.ok(Map.of("test_cases", testCasesList));
+        return ResponseEntity.ok(Map.of("test_cases", testCasesWithEvents));
     }
 
     /**
+     * Update the category of a test case
+     *
+     * @param verticalId Vertical ID
+     * @param request Update category request containing test case ID and new category
+     * @return Success message
+     */
+    @PutMapping("/{verticalId}/update-test-case-category")
+    public ResponseEntity<Map<String, String>> updateTestCaseCategory(
+            @PathVariable UUID verticalId,
+            @RequestBody UpdateCategoryRequestDto request) {
+
+        logger.info("Controller: Updating category for test case ID: {} to {}", 
+                request.getTestCaseId(), request.getCategory());
+
+        try {
+            String result = codelessAutomation.updateTestCaseCategory(request.getTestCaseId(), request.getCategory());
+            return ResponseEntity.ok(Map.of("message", result));
+        } catch (IllegalArgumentException e) {
+            logger.error("Error updating test case category: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Unexpected error updating test case category: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred"));
+        }
+    }
+
+    /**
+     * Get events for a specific test case
+     *
+     * @param verticalId Vertical ID
+     * @param testCaseId Test case ID
+     * @return Test case with its events
+     */
+    @GetMapping("/{verticalId}/test-case-events/{testCaseId}")
+    public ResponseEntity<?> getTestCaseEvents(
+            @PathVariable UUID verticalId,
+            @PathVariable String testCaseId) {
+
+        logger.info("Controller: Retrieving events for test case ID: {}", testCaseId);
+
+        try {
+            TestCaseWithEventsDto testCase = codelessAutomation.getTestCaseEvents(testCaseId);
+            return ResponseEntity.ok(testCase);
+        } catch (IllegalArgumentException e) {
+            logger.error("Error retrieving test case events: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Unexpected error retrieving test case events: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred"));
+        }
+    }
+
+    /**
+     * Run multiple test cases
+     *
+     * @param verticalId Vertical ID
+     * @param request Request containing list of test case IDs to run
+     * @return Results of the test execution
+     */
+    @PostMapping("/{verticalId}/run-multiple-test-cases")
+    public ResponseEntity<?> runMultipleTestCases(
+            @PathVariable UUID verticalId,
+            @RequestBody RunMultipleTestCasesRequestDto request) {
+
+        logger.info("Controller: Running multiple test cases: {}", request.getTestCaseIds());
+
+        try {
+            List<TestExecutionResultDto> results = codelessAutomation.runMultipleTestCases(
+                    request.getTestCaseIds(), 
+                    seleniumTestExecutor
+            );
+            return ResponseEntity.ok(Map.of("results", results));
+        } catch (Exception e) {
+            logger.error("Error running multiple test cases: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred"));
+        }
+    }
+    
+    /**
      * Record interaction log with events
      *
-     * @param verticalId UUID of the vertical
      * @param request Interaction log request with token and events
      * @return Success message
      */

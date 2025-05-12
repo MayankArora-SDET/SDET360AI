@@ -1,6 +1,5 @@
 package com.sdet.sdet360.tenant.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdet.sdet360.tenant.auth.JwtProperties;
 import com.sdet.sdet360.tenant.dto.*;
 import com.sdet.sdet360.tenant.enums.TestCaseCategory;
@@ -24,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -143,29 +143,54 @@ public class CodelessAutomation {
      * Get recorded test cases with optional category filtering
      *
      * @param category Optional category filter
-     * @return List of test cases
+     * @return List of test cases with their associated events
      */
-    public List<TestCaseResponseDto> getRecordedTestCases(String category) {
+    public List<TestCaseWithEventsDto> getRecordedTestCases(String category) {
         logger.info("Service: Retrieving test cases with category filter: {}", category);
 
         // Convert category to lowercase for case-insensitive comparison
         String categoryFilter = (category == null || category.isEmpty()) ?
-                TestCaseCategory.ALL.name().toLowerCase() : category.toLowerCase();
+                TestCaseCategory.ALL.name().toUpperCase() : category.toUpperCase();
 
         // Build query based on category
         List<InteractionTable> testCases;
-        if (categoryFilter.equals(TestCaseCategory.ALL.name().toLowerCase())) {
+        if (categoryFilter.equals(TestCaseCategory.ALL.name().toUpperCase())) {
             testCases = interactionTableRepository.findAllActive();
         } else {
             testCases = interactionTableRepository.findByCategoryAndNotDeleted(categoryFilter);
         }
-
-        // Map to DTOs
+        
+        logger.info("Found {} test cases matching category: {}", testCases.size(), categoryFilter);
+        
+        // Map to DTOs with events
         return testCases.stream()
-                .map(testCase -> new TestCaseResponseDto(
-                        testCase.getTestcaseId().toString(),
-                        testCase.getDescription(),
-                        testCase.getCategory().toLowerCase()))
+                .map(testCase -> {
+                    // Fetch events for this test case
+                    List<EventsTable> events = eventsTableRepository.findByTestcaseId(testCase.getTestcaseId());
+                    logger.info("Found {} events for test case ID: {}", events.size(), testCase.getTestcaseId());
+                    
+                    // Convert EventsTable entities to EventDto objects
+                    List<EventDto> eventDtos = events.stream()
+                            .map(event -> {
+                                EventDto dto = new EventDto();
+                                dto.setAbsoluteXPath(event.getAbsolutePath());
+                                dto.setRelativeXPath(event.getRelativeXpath());
+                                dto.setRelationalXPath(event.getRelationalXpath());
+                                dto.setAction(event.getAction());
+                                dto.setType(event.getType());
+                                dto.setValue(event.getValue());
+                                return dto;
+                            })
+                            .collect(Collectors.toList());
+                    
+                    // Create and return the DTO with test case info and events
+                    return new TestCaseWithEventsDto(
+                            testCase.getTestcaseId().toString(),
+                            testCase.getUrl(),
+                            testCase.getDescription(),
+                            testCase.getCategory().toLowerCase(),
+                            eventDtos);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -355,12 +380,113 @@ public class CodelessAutomation {
         }
     }
 
-    /**
-     * Converts Date to LocalDateTime
-     */
-    private LocalDateTime toLocalDateTime(Date date) {
-        return date.toInstant()
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime();
-    }
+/**
+ * Converts Date to LocalDateTime
+ */
+private LocalDateTime toLocalDateTime(Date date) {
+    return date.toInstant()
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime();
 }
+
+/**
+ * Update the category of a test case
+ *
+ * @param testCaseId The ID of the test case to update
+ * @param newCategory The new category to assign to the test case
+ * @return A message indicating success or failure
+ */
+@Transactional
+public String updateTestCaseCategory(String testCaseId, String newCategory) {
+    logger.info("Service: Updating category for test case ID: {} to {}", testCaseId, newCategory);
+
+    // Validate category
+    try {
+        TestCaseCategory.valueOf(newCategory.toUpperCase());
+    } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Invalid category: " + newCategory);
+    }
+
+    // Find the test case
+    UUID testCaseUuid;
+    try {
+        testCaseUuid = UUID.fromString(testCaseId);
+    } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Invalid test case ID format");
+    }
+
+    // Update the category
+    InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
+            .orElseThrow(() -> new IllegalArgumentException("Test case not found: " + testCaseId));
+
+    testCase.setCategory(newCategory.toUpperCase());
+    interactionTableRepository.save(testCase);
+
+    return "Test case category updated successfully";
+}
+
+/**
+ * Get events for a specific test case
+ *
+ * @param testCaseId The ID of the test case
+ * @return The test case with its events
+ */
+public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
+    logger.info("Service: Retrieving events for test case ID: {}", testCaseId);
+
+    // Parse the test case ID
+    UUID testCaseUuid;
+    try {
+        testCaseUuid = UUID.fromString(testCaseId);
+    } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Invalid test case ID format");
+    }
+
+    // Find the test case
+    InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
+            .orElseThrow(() -> new IllegalArgumentException("Test case not found: " + testCaseId));
+
+    // Fetch events for this test case
+    List<EventsTable> events = eventsTableRepository.findByTestcaseId(testCaseUuid);
+    logger.info("Found {} events for test case ID: {}", events.size(), testCaseId);
+
+    // Convert EventsTable entities to EventDto objects
+    List<EventDto> eventDtos = events.stream()
+            .map(event -> {
+                EventDto dto = new EventDto();
+                dto.setAbsoluteXPath(event.getAbsolutePath());
+                dto.setRelativeXPath(event.getRelativeXpath());
+                dto.setRelationalXPath(event.getRelationalXpath());
+                dto.setAction(event.getAction());
+                dto.setType(event.getType());
+                dto.setValue(event.getValue());
+                return dto;
+            })
+            .collect(Collectors.toList());
+
+    // Create and return the DTO with test case info and events
+    return new TestCaseWithEventsDto(
+            testCase.getTestcaseId().toString(),
+            testCase.getUrl(),
+            testCase.getDescription(),
+            testCase.getCategory().toLowerCase(),
+            eventDtos);
+}
+
+/**
+ * Run multiple test cases
+ *
+ * @param testCaseIds List of test case IDs to run
+ * @return Results of the test execution
+ */
+public List<TestExecutionResultDto> runMultipleTestCases(List<String> testCaseIds, SeleniumTestExecutor seleniumTestExecutor) {
+    logger.info("Service: Running multiple test cases: {}", testCaseIds);
+    
+    CodelessAutomationMethods methods = new CodelessAutomationMethods(
+            interactionTableRepository,
+            eventsTableRepository,
+            featureRepository
+    );
+    
+    return methods.runMultipleTestCases(testCaseIds, seleniumTestExecutor);
+}}
