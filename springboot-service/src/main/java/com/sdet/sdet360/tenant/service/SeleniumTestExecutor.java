@@ -14,6 +14,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -35,6 +36,9 @@ public class SeleniumTestExecutor {
 
     private static final Logger logger = LoggerFactory.getLogger(SeleniumTestExecutor.class);
     private static final String SCREENSHOTS_BASE_DIR = System.getProperty("user.home") + "/sdet360/screenshots";
+    
+    @Autowired
+    private SelfHealingService selfHealingService;
 
     /**
      * Executes a test case using Selenium WebDriver
@@ -55,6 +59,7 @@ public class SeleniumTestExecutor {
         boolean autoHealed = false;
         List<String> screenshots = new ArrayList<>();
         List<Map<String, Object>> executedEvents = new ArrayList<>();
+        List<String> eventIds = new ArrayList<>(); // Add list to collect event IDs
         
         try {
             WebDriverManager.chromedriver().browserVersion("77.0.3865.40").setup();
@@ -70,6 +75,9 @@ public class SeleniumTestExecutor {
             driver = new ChromeDriver(options);
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
             
+            // Initialize self-healing service
+            selfHealingService.initialize(driver);
+            
             // Create screenshots directory
             Path screenshotsDir = Paths.get(SCREENSHOTS_BASE_DIR, testCaseId);
             Files.createDirectories(screenshotsDir);
@@ -84,10 +92,13 @@ public class SeleniumTestExecutor {
             // Execute each event
             int eventIndex = 0;
             for (EventsTable event : events) {
+                // Add event ID to the list
+                eventIds.add(event.getId().toString());
                 Map<String, Object> executedEvent = new HashMap<>();
                 executedEvent.put("action", event.getAction());
                 executedEvent.put("relativeXPath", event.getRelativeXpath());
                 executedEvent.put("value", event.getValue());
+                executedEvent.put("eventId", event.getId().toString()); // Add event ID to each executed event
                 
                 try {
                     String action = event.getAction();
@@ -101,8 +112,18 @@ public class SeleniumTestExecutor {
                         continue;
                     }
                     
-                    // Wait for element to be present and visible
-                    WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath)));
+                    // Use self-healing service to get element
+                    Map<String, Object> elementResult = selfHealingService.getClickableElement(xpath);
+                    WebElement element = (WebElement) elementResult.get("element");
+                    boolean elementAutoHealed = (boolean) elementResult.get("autoHealed");
+                    
+                    // Update auto-healing information
+                    executedEvent.put("autoHealed", elementAutoHealed);
+                    if (elementAutoHealed) {
+                        String healedXpath = (String) elementResult.get("healedXpath");
+                        executedEvent.put("healedXPath", healedXpath);
+                        logger.info("Auto-healed XPath from '{}' to '{}'", xpath, healedXpath);
+                    }
                     
                     // Execute action based on type
                     if ("click".equalsIgnoreCase(action)) {
@@ -128,16 +149,18 @@ public class SeleniumTestExecutor {
                     executedEvent.put("executed", false);
                     executedEvent.put("error", e.getMessage());
                     
-                    // Try self-healing here (simplified version)
+                    // Advanced self-healing attempt using SelfHealingService
                     try {
-                        // Try a more flexible XPath or alternative locator strategy
-                        String relaxedXPath = relaxXPath(event.getRelativeXpath());
-                        WebElement healedElement = driver.findElement(By.xpath(relaxedXPath));
+                        Map<String, Object> healingResult = selfHealingService.getClickableElement(event.getRelativeXpath());
+                        WebElement healedElement = (WebElement) healingResult.get("element");
+                        boolean elementAutoHealed = (boolean) healingResult.get("autoHealed");
                         
-                        if (healedElement != null) {
-                            autoHealed = true;
+                        if (healedElement != null && elementAutoHealed) {
+                            String healedXpath = (String) healingResult.get("healedXpath");
+                            // Use the elementAutoHealed variable that was already declared
                             executedEvent.put("autoHealed", true);
-                            executedEvent.put("healedXPath", relaxedXPath);
+                            executedEvent.put("healedXPath", healedXpath);
+                            logger.info("Auto-healed XPath from '{}' to '{}'", event.getRelativeXpath(), healedXpath);
                             
                             if ("click".equalsIgnoreCase(event.getAction())) {
                                 healedElement.click();
@@ -169,7 +192,8 @@ public class SeleniumTestExecutor {
             
             // Set result
             result.setStatus("SUCCESS");
-            result.setAutoHealed(autoHealed);
+            result.setAutoHealed(autoHealed); // Using the class-level autoHealed variable
+            result.setEventIds(eventIds); // Set the event IDs in the result
             result.setScreenshots(screenshots);
             result.setExecutedEvents(executedEvents);
             
@@ -177,6 +201,7 @@ public class SeleniumTestExecutor {
             logger.error("Error executing test case {}: {}", testCaseId, e.getMessage(), e);
             result.setStatus("FAILED");
             result.setErrorMessage(e.getMessage());
+            result.setEventIds(eventIds); // Set the event IDs in case of failure
             result.setScreenshots(screenshots);
             result.setExecutedEvents(executedEvents);
         } finally {

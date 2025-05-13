@@ -144,10 +144,13 @@ public class CodelessAutomationMethods {
                 // Fetch events for this test case
                 List<EventsTable> events = eventsTableRepository.findByTestcaseId(testCaseUuid);
                 
-                if (events.isEmpty()) {
+                if (events.isEmpty()) { 
+                    List<String> emptyEventIds = new ArrayList<>();
+                    
                     TestExecutionResultDto emptyResult = TestExecutionResultDto.builder()
                             .testCaseId(testCaseId)
                             .status("FAILED")
+                            .eventIds(emptyEventIds)  
                             .errorMessage("No events found for test case")
                             .build();
                     results.add(emptyResult);
