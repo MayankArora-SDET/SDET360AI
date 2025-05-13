@@ -178,18 +178,16 @@ public class JiraApiService {
         StringBuilder descBuilder = new StringBuilder();
 
         for (JsonNode iss : issues) {
-            System.out.println("ISSUE JSON: " + iss.toPrettyString());  // Print full JSON node
-
             keys.add(iss.get("key").asText());
 
-            JsonNode fieldsNode = iss.get("fields");
-            if (fieldsNode == null) {
-                System.out.println("Missing 'fields' in issue: " + iss.toPrettyString());
-                continue; // skip this issue
+            JsonNode descriptionNode = iss.path("description");
+            if (descriptionNode.isObject()) {
+                descBuilder.append(formatJiraDescription(descriptionNode, iss.get("key").asText(),
+                        iss.path("summary").asText("")));
+            } else {
+                String description = descriptionNode.asText("");
+                descBuilder.append(description);
             }
-
-            String description = fieldsNode.path("description").asText("");
-            descBuilder.append(description);
         }
 
         String templateToUse;
@@ -220,8 +218,8 @@ public class JiraApiService {
      * @return API response as a map
      */
     public Map<String, Object>makeCustomRequest(String jiraUrl, String username, String apiToken,
-                                                 String endpoint, HttpMethod method,
-                                                 Object requestBody, Map<String, String> queryParams) {
+                                                String endpoint, HttpMethod method,
+                                                Object requestBody, Map<String, String> queryParams) {
         logger.info("Making custom {} request to Jira endpoint: {}", method, endpoint);
 
         String fullEndpoint = jiraUrl.endsWith("/")
@@ -388,6 +386,155 @@ public class JiraApiService {
         AiResponse resp = stub.generateResponse(req);
         channel.shutdown();
         return resp.getResponseText();
+    }
+
+    /**
+     * Format JIRA description from Atlassian Document Format (ADF) to plain text
+     * @param descriptionNode The description node in ADF format
+     * @param issueKey The issue key
+     * @param summary The issue summary
+     * @return Formatted description text
+     */
+    private String formatJiraDescription(JsonNode descriptionNode, String issueKey, String summary) {
+        StringBuilder formattedDesc = new StringBuilder();
+
+        // Add issue key and summary as header
+        formattedDesc.append("# ").append(issueKey).append(": ").append(summary).append("\n\n");
+
+        // Check if it's in the expected format
+        if (descriptionNode.has("content")) {
+            JsonNode content = descriptionNode.get("content");
+            if (content.isArray()) {
+                for (JsonNode contentItem : content) {
+                    processContentNode(contentItem, formattedDesc, 0);
+                }
+            }
+        }
+
+        formattedDesc.append("\n\n");
+        return formattedDesc.toString();
+    }
+
+    /**
+     * Process a content node from the Atlassian Document Format
+     * @param node The content node
+     * @param builder The string builder to append to
+     * @param depth Current depth for nested elements
+     */
+    private void processContentNode(JsonNode node, StringBuilder builder, int depth) {
+        if (!node.has("type")) {
+            return;
+        }
+
+        String nodeType = node.get("type").asText();
+
+        switch (nodeType) {
+            case "text":
+                String text = node.has("text") ? node.get("text").asText() : "";
+                // Apply text formatting if marks are present
+                if (node.has("marks") && node.get("marks").isArray()) {
+                    for (JsonNode mark : node.get("marks")) {
+                        String markType = mark.get("type").asText();
+                        if ("strong".equals(markType)) {
+                            text = "**" + text + "**";
+                        } else if ("em".equals(markType)) {
+                            text = "*" + text + "*";
+                        }
+                    }
+                }
+                builder.append(text);
+                break;
+
+            case "paragraph":
+                if (depth > 0) {
+                    builder.append("\n");
+                    for (int i = 0; i < depth; i++) {
+                        builder.append("  ");
+                    }
+                }
+                if (node.has("content")) {
+                    for (JsonNode content : node.get("content")) {
+                        processContentNode(content, builder, depth);
+                    }
+                }
+                builder.append("\n");
+                break;
+
+            case "heading":
+                int level = node.has("attrs") && node.get("attrs").has("level") ?
+                        node.get("attrs").get("level").asInt() : 1;
+                builder.append("\n");
+                for (int i = 0; i < level; i++) {
+                    builder.append("#");
+                }
+                builder.append(" ");
+                if (node.has("content")) {
+                    for (JsonNode content : node.get("content")) {
+                        processContentNode(content, builder, depth);
+                    }
+                }
+                builder.append("\n");
+                break;
+
+            case "bulletList":
+                builder.append("\n");
+                if (node.has("content")) {
+                    for (JsonNode item : node.get("content")) {
+                        processContentNode(item, builder, depth + 1);
+                    }
+                }
+                break;
+
+            case "orderedList":
+                builder.append("\n");
+                if (node.has("content")) {
+                    int i = node.has("attrs") && node.get("attrs").has("order") ?
+                            node.get("attrs").get("order").asInt() : 1;
+                    for (JsonNode item : node.get("content")) {
+                        processListItem(item, builder, depth + 1, i++, true);
+                    }
+                }
+                break;
+
+            case "listItem":
+                processListItem(node, builder, depth, 1, false);
+                break;
+
+            default:
+                if (node.has("content")) {
+                    for (JsonNode content : node.get("content")) {
+                        processContentNode(content, builder, depth);
+                    }
+                }
+                break;
+        }
+    }
+
+    /**
+     * Process a list item node
+     * @param node The list item node
+     * @param builder The string builder to append to
+     * @param depth Current depth for nested elements
+     * @param index Item index for ordered lists
+     * @param isOrdered Whether this is an ordered list
+     */
+    private void processListItem(JsonNode node, StringBuilder builder, int depth, int index, boolean isOrdered) {
+        builder.append("\n");
+        for (int i = 0; i < depth - 1; i++) {
+            builder.append("  ");
+        }
+
+        if (isOrdered) {
+            builder.append(index).append(". ");
+        } else {
+            builder.append("- ");
+        }
+
+        if (node.has("content")) {
+            for (JsonNode content : node.get("content")) {
+                processContentNode(content, builder, depth);
+            }
+        }
     }
 
     // Helper method to create authentication headers
