@@ -5,9 +5,9 @@ CREATE TABLE interaction_tables (
     description TEXT,
     category VARCHAR,
     url VARCHAR,
-    created_on TIMESTAMP,
-    updated_on TIMESTAMP,
-    deleted_on TIMESTAMP
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP
 );
 
 CREATE TABLE event_tables (
@@ -16,6 +16,10 @@ CREATE TABLE event_tables (
     absolute_path VARCHAR,
     relative_xpath VARCHAR,
     relational_xpath VARCHAR,
+    action VARCHAR,
+    type VARCHAR,
+    value VARCHAR,
+    assertion BOOLEAN,
     is_modified BOOLEAN,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,

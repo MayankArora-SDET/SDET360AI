@@ -41,13 +41,16 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth ->
                 auth.requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/users/tenant/**").permitAll()
                     .requestMatchers("/api/tenants/**").permitAll()
+                    .requestMatchers("/api/tokens/**").permitAll()
+                    .requestMatchers("/api/tokens/record").permitAll()
+                    .requestMatchers("/api/tokens/validate").permitAll()
                     .anyRequest().authenticated()
             );
 
@@ -74,7 +77,8 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://tenant1.localhost:4200"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
