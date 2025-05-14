@@ -454,12 +454,15 @@ public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
     List<EventDto> eventDtos = events.stream()
             .map(event -> {
                 EventDto dto = new EventDto();
+                dto.setEventId(event.getId());
                 dto.setAbsoluteXPath(event.getAbsolutePath());
                 dto.setRelativeXPath(event.getRelativeXpath());
                 dto.setRelationalXPath(event.getRelationalXpath());
                 dto.setAction(event.getAction());
                 dto.setType(event.getType());
                 dto.setValue(event.getValue());
+                dto.setAssertion(event.getAssertion());
+                dto.setAutohealed(event.getIsModified());
                 return dto;
             })
             .collect(Collectors.toList());

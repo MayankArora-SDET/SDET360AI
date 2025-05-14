@@ -170,7 +170,7 @@ public class JiraProjectController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/issue/{verticalId}/search")
+    @PostMapping("/issue/{verticalId}/search")
     public ResponseEntity<Map<String, Object>> searchIssuesByKeys(
             @PathVariable UUID verticalId,
             @RequestBody List<String> issueKeys,

@@ -1,11 +1,16 @@
 package com.sdet.sdet360.tenant.dto;
 
+import java.util.UUID;
+
 public class EventDto {
+    private UUID eventId;
     private String relativeXPath;
     private String absoluteXPath;
     private String relationalXPath;
     private String action;
     private String type;
+    private Boolean Assertion;
+    private Boolean Autohealed;
     private String value;
 
     public String getRelativeXPath() {
@@ -54,5 +59,29 @@ public class EventDto {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    public Boolean getAssertion() {
+        return Assertion;
+    }
+
+    public void setAssertion(Boolean assertion) {
+        Assertion = assertion;
+    }
+
+    public Boolean getAutohealed() {
+        return Autohealed;
+    }
+
+    public void setAutohealed(Boolean autohealed) {
+        Autohealed = autohealed;
+    }
+
+    public void setEventId(UUID eventId) {
+        this.eventId = eventId;
     }
 }
