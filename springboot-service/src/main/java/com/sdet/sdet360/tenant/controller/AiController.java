@@ -47,15 +47,14 @@ public class AiController {
             }
 
             String prompt = (String) request.get("prompt");
+            System.out.println(prompt);
             @SuppressWarnings("unchecked")
             Map<String, String> parameters = (Map<String, String>) request.getOrDefault("parameters", new HashMap<>());
 
-            AiResponse response = grpcClient.generateResponse(prompt, parameters);
+            AiResponse response = grpcClient.generateResponseForGeneralChat(prompt, parameters);
 
             Map<String, Object> result = new HashMap<>();
-            result.put("text", response.getResponseText());
-            result.put("confidence", response.getConfidenceScore());
-            result.put("metadata", response.getMetadataMap());
+            result.put("text", response.getResponseText()); 
 
             return ResponseEntity.ok(result);
         } finally {
@@ -99,3 +98,5 @@ public class AiController {
         }
     }
 }
+//tum response kro padh rhe ho ki nhi meko pata ni chal rha
+//haa to uske liye ek new method banaya grpc m

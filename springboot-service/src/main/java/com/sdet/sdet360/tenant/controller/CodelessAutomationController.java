@@ -40,11 +40,11 @@ public class CodelessAutomationController {
      * @throws TokenGenerationException if token generation fails
      */
     @PostMapping("/{verticalId}/generate")
-    public ResponseEntity<TokenResponseDto> generateToken(@PathVariable UUID verticalId, @Valid @RequestBody TokenRequestDto request)
+    public ResponseEntity<TokenResponseDto> generateToken(@PathVariable String verticalId, @Valid @RequestBody TokenRequestDto request)
             throws TokenGenerationException {
         logger.info("Token generation request received for URL: {}", request.getUrl());
-
-        String token = codelessAutomation.generateToken(verticalId, request);
+        UUID verId = UUID.fromString(verticalId);
+        String token = codelessAutomation.generateToken(verId, request);
         logger.debug("Token generated successfully");
 
         return ResponseEntity.ok(TokenResponseDto.success(token));

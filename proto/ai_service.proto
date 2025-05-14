@@ -8,6 +8,7 @@ option java_outer_classname = "AiServiceProto";
 
 service AiService {
   rpc GenerateResponse (AiRequest) returns (AiResponse) {}
+  rpc GenerateResponseForGeneralChat (AiRequest) returns (AiResponse);
   rpc ProcessDocument (DocumentRequest) returns (DocumentResponse) {}
   rpc GenerateApiTestingScenarios(AiRequest) returns (AiResponse) {}
   rpc GenerateJiraStories(AiRequest) returns (AiResponse) {}

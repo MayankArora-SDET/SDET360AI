@@ -11,6 +11,29 @@ from app.llm import prompt_templates
 from app.llm.client_factory import LLMClientFactory
 
 class AiServiceServicer(ai_service_pb2_grpc.AiServiceServicer):
+    def GenerateResponseForGeneralChat(self, request, context):
+        logging.info(f"Received gRPC general chat request: {request}")
+        prompt = getattr(request, "prompt", None)
+        model = "grok"
+        metadata = {"mode": "general_chat"}
+        if hasattr(request, 'parameters') and request.parameters.get("model"):
+            model = request.parameters.get("model")
+        if not prompt:
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details("Prompt is required for general chat.")
+            return ai_service_pb2.AiResponse(metadata=metadata)
+        client = LLMClientFactory.get_client(model)
+        try:
+            ai_text = client.chat([{"role": "user", "content": prompt}])
+        except Exception as e:
+            logging.error(f"LLM call error: {e}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            return ai_service_pb2.AiResponse(metadata=metadata)
+        return ai_service_pb2.AiResponse(
+            response_text    = ai_text
+        )
+
     def GenerateResponse(self, request, context):
         logging.info(f"Received gRPC request: {request}")
         tpl_name    = request.parameters.get("template_name")

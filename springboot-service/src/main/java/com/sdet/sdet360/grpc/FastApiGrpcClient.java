@@ -21,7 +21,7 @@ public class FastApiGrpcClient {
         this.aiServiceStub = AiServiceGrpc.newBlockingStub(channel);
     }
 
-    public AiResponse generateResponse(String prompt, Map<String, String> parameters) {
+    public AiResponse generateResponseForGeneralChat(String prompt, Map<String, String> parameters) {
         UUID tenantId = TenantContextHolder.getTenantId();
         String tenantIdStr = tenantId != null ? tenantId.toString() : TenantContextHolder.MASTER_TENANT_ID.toString();
 
@@ -31,7 +31,7 @@ public class FastApiGrpcClient {
                 .putAllParameters(parameters)
                 .build();
 
-        return aiServiceStub.generateResponse(request);
+        return aiServiceStub.generateResponseForGeneralChat(request);
     }
 
     public DocumentResponse processDocument(String documentContent, String documentType) {

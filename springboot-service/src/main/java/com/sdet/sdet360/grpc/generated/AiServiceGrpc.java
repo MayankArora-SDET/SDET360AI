@@ -46,6 +46,37 @@ public final class AiServiceGrpc {
     return getGenerateResponseMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest,
+      com.sdet.sdet360.grpc.generated.AiResponse> getGenerateResponseForGeneralChatMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "GenerateResponseForGeneralChat",
+      requestType = com.sdet.sdet360.grpc.generated.AiRequest.class,
+      responseType = com.sdet.sdet360.grpc.generated.AiResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest,
+      com.sdet.sdet360.grpc.generated.AiResponse> getGenerateResponseForGeneralChatMethod() {
+    io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest, com.sdet.sdet360.grpc.generated.AiResponse> getGenerateResponseForGeneralChatMethod;
+    if ((getGenerateResponseForGeneralChatMethod = AiServiceGrpc.getGenerateResponseForGeneralChatMethod) == null) {
+      synchronized (AiServiceGrpc.class) {
+        if ((getGenerateResponseForGeneralChatMethod = AiServiceGrpc.getGenerateResponseForGeneralChatMethod) == null) {
+          AiServiceGrpc.getGenerateResponseForGeneralChatMethod = getGenerateResponseForGeneralChatMethod =
+              io.grpc.MethodDescriptor.<com.sdet.sdet360.grpc.generated.AiRequest, com.sdet.sdet360.grpc.generated.AiResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "GenerateResponseForGeneralChat"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.sdet.sdet360.grpc.generated.AiRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.sdet.sdet360.grpc.generated.AiResponse.getDefaultInstance()))
+              .setSchemaDescriptor(new AiServiceMethodDescriptorSupplier("GenerateResponseForGeneralChat"))
+              .build();
+        }
+      }
+    }
+    return getGenerateResponseForGeneralChatMethod;
+  }
+
   private static volatile io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.DocumentRequest,
       com.sdet.sdet360.grpc.generated.DocumentResponse> getProcessDocumentMethod;
 
@@ -196,6 +227,13 @@ public final class AiServiceGrpc {
 
     /**
      */
+    default void generateResponseForGeneralChat(com.sdet.sdet360.grpc.generated.AiRequest request,
+        io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getGenerateResponseForGeneralChatMethod(), responseObserver);
+    }
+
+    /**
+     */
     default void processDocument(com.sdet.sdet360.grpc.generated.DocumentRequest request,
         io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.DocumentResponse> responseObserver) {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getProcessDocumentMethod(), responseObserver);
@@ -253,6 +291,14 @@ public final class AiServiceGrpc {
 
     /**
      */
+    public void generateResponseForGeneralChat(com.sdet.sdet360.grpc.generated.AiRequest request,
+        io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getGenerateResponseForGeneralChatMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
     public void processDocument(com.sdet.sdet360.grpc.generated.DocumentRequest request,
         io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.DocumentResponse> responseObserver) {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
@@ -297,6 +343,13 @@ public final class AiServiceGrpc {
     public com.sdet.sdet360.grpc.generated.AiResponse generateResponse(com.sdet.sdet360.grpc.generated.AiRequest request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getGenerateResponseMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.sdet.sdet360.grpc.generated.AiResponse generateResponseForGeneralChat(com.sdet.sdet360.grpc.generated.AiRequest request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getGenerateResponseForGeneralChatMethod(), getCallOptions(), request);
     }
 
     /**
@@ -347,6 +400,14 @@ public final class AiServiceGrpc {
 
     /**
      */
+    public com.google.common.util.concurrent.ListenableFuture<com.sdet.sdet360.grpc.generated.AiResponse> generateResponseForGeneralChat(
+        com.sdet.sdet360.grpc.generated.AiRequest request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getGenerateResponseForGeneralChatMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.sdet.sdet360.grpc.generated.DocumentResponse> processDocument(
         com.sdet.sdet360.grpc.generated.DocumentRequest request) {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
@@ -371,9 +432,10 @@ public final class AiServiceGrpc {
   }
 
   private static final int METHODID_GENERATE_RESPONSE = 0;
-  private static final int METHODID_PROCESS_DOCUMENT = 1;
-  private static final int METHODID_GENERATE_API_TESTING_SCENARIOS = 2;
-  private static final int METHODID_GENERATE_JIRA_STORIES = 3;
+  private static final int METHODID_GENERATE_RESPONSE_FOR_GENERAL_CHAT = 1;
+  private static final int METHODID_PROCESS_DOCUMENT = 2;
+  private static final int METHODID_GENERATE_API_TESTING_SCENARIOS = 3;
+  private static final int METHODID_GENERATE_JIRA_STORIES = 4;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -394,6 +456,10 @@ public final class AiServiceGrpc {
       switch (methodId) {
         case METHODID_GENERATE_RESPONSE:
           serviceImpl.generateResponse((com.sdet.sdet360.grpc.generated.AiRequest) request,
+              (io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse>) responseObserver);
+          break;
+        case METHODID_GENERATE_RESPONSE_FOR_GENERAL_CHAT:
+          serviceImpl.generateResponseForGeneralChat((com.sdet.sdet360.grpc.generated.AiRequest) request,
               (io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse>) responseObserver);
           break;
         case METHODID_PROCESS_DOCUMENT:
@@ -433,6 +499,13 @@ public final class AiServiceGrpc {
               com.sdet.sdet360.grpc.generated.AiRequest,
               com.sdet.sdet360.grpc.generated.AiResponse>(
                 service, METHODID_GENERATE_RESPONSE)))
+        .addMethod(
+          getGenerateResponseForGeneralChatMethod(),
+          io.grpc.stub.ServerCalls.asyncUnaryCall(
+            new MethodHandlers<
+              com.sdet.sdet360.grpc.generated.AiRequest,
+              com.sdet.sdet360.grpc.generated.AiResponse>(
+                service, METHODID_GENERATE_RESPONSE_FOR_GENERAL_CHAT)))
         .addMethod(
           getProcessDocumentMethod(),
           io.grpc.stub.ServerCalls.asyncUnaryCall(
@@ -503,6 +576,7 @@ public final class AiServiceGrpc {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new AiServiceFileDescriptorSupplier())
               .addMethod(getGenerateResponseMethod())
+              .addMethod(getGenerateResponseForGeneralChatMethod())
               .addMethod(getProcessDocumentMethod())
               .addMethod(getGenerateApiTestingScenariosMethod())
               .addMethod(getGenerateJiraStoriesMethod())
