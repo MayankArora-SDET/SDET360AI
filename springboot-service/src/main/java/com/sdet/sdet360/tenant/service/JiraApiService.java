@@ -207,6 +207,45 @@ public class JiraApiService {
     }
 
     /**
+     * Search for multiple issues by keys and generate AI responses for each.
+     * @param jiraUrl The base URL of the Jira instance
+     * @param username Jira username
+     * @param apiToken API token for authentication
+     * @param issueKeys List of issue keys
+     * @param issueType Issue type
+     * @param templateName Optional template name
+     * @return Map of issueKey to AI response
+     */
+    public Map<String, Object> searchIssuesByKeys(String jiraUrl, String username, String apiToken,
+                                           List<String> issueKeys, String issueType, String templateName) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (String issueKey : issueKeys) {
+            try {
+                JsonNode issue = fetchIssueByKey(issueKey, jiraUrl, username, apiToken);
+                String summary = issue.path("fields").path("summary").asText("");
+                JsonNode descriptionNode = issue.path("fields").path("description");
+                String description;
+                if (descriptionNode.isObject()) {
+                    description = formatJiraDescription(descriptionNode, issueKey, summary);
+                } else {
+                    description = descriptionNode.asText("");
+                }
+                List<String> keysList = new ArrayList<>();
+                keysList.add(issueKey);
+                String aiText = generateAiTestCases(templateName, issueType, keysList, description, "localhost", 50051);
+                Map<String, Object> issueResp = new HashMap<>();
+                issueResp.put("summary", summary);
+                issueResp.put("description", description);
+                issueResp.put("aiResponse", aiText);
+                result.put(issueKey, issueResp);
+            } catch (Exception e) {
+                result.put(issueKey, Collections.singletonMap("error", e.getMessage()));
+            }
+        }
+        return result;
+    }
+
+    /**
      * Make custom API request to Jira
      * @param jiraUrl The base URL of the Jira instance
      * @param username Jira username

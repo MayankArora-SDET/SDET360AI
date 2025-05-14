@@ -170,27 +170,23 @@ public class JiraProjectController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/issue/{verticalId}/{issueKey}/search")
-    public ResponseEntity<Map<String, Object>> searchIssueByKey(
+    @GetMapping("/issue/{verticalId}/search")
+    public ResponseEntity<Map<String, Object>> searchIssuesByKeys(
             @PathVariable UUID verticalId,
-            @PathVariable String issueKey,
+            @RequestParam String issueKeys,
             @RequestParam String issueType,
             @RequestParam(required = false) String templateName) {
         Optional<Vertical> verticalOpt = verticalRepository.findById(verticalId);
         if (!verticalOpt.isPresent()) {
             return ResponseEntity.notFound().build();
         }
-        Vertical vertical = verticalOpt.get(); 
-        String jql = "key=" + issueKey;
-        if (issueType != null && !issueType.isBlank()) {
-            jql += " AND issuetype=\"" + issueType + "\"";
-        }
-        System.out.printf("server name", vertical.getJiraServerUrl());
-        Map<String, Object> resp = jiraApiService.searchIssues(
+        Vertical vertical = verticalOpt.get();
+        List<String> keys = Arrays.asList(issueKeys.split(","));
+        Map<String, Object> resp = jiraApiService.searchIssuesByKeys(
                 vertical.getJiraServerUrl(),
                 vertical.getJiraUsername(),
                 vertical.getApiKey(),
-                jql,
+                keys,
                 issueType,
                 templateName
         );
