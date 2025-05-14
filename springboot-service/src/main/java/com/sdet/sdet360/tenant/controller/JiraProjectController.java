@@ -173,7 +173,7 @@ public class JiraProjectController {
     @GetMapping("/issue/{verticalId}/search")
     public ResponseEntity<Map<String, Object>> searchIssuesByKeys(
             @PathVariable UUID verticalId,
-            @RequestParam String issueKeys,
+            @RequestBody List<String> issueKeys,
             @RequestParam String issueType,
             @RequestParam(required = false) String templateName) {
         Optional<Vertical> verticalOpt = verticalRepository.findById(verticalId);
@@ -181,12 +181,11 @@ public class JiraProjectController {
             return ResponseEntity.notFound().build();
         }
         Vertical vertical = verticalOpt.get();
-        List<String> keys = Arrays.asList(issueKeys.split(","));
         Map<String, Object> resp = jiraApiService.searchIssuesByKeys(
                 vertical.getJiraServerUrl(),
                 vertical.getJiraUsername(),
                 vertical.getApiKey(),
-                keys,
+                issueKeys,
                 issueType,
                 templateName
         );
@@ -257,3 +256,6 @@ public class JiraProjectController {
         }
     }
 }
+
+
+//
