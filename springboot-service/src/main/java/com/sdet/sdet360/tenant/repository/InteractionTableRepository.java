@@ -15,8 +15,8 @@ public interface InteractionTableRepository extends JpaRepository<InteractionTab
     @Query("SELECT i FROM InteractionTable i WHERE i.deletedAt IS NULL")
     List<InteractionTable> findAllActive();
 
-    @Query("SELECT i FROM InteractionTable i WHERE i.category = :category AND i.deletedAt IS NULL")
-    List<InteractionTable> findByCategoryAndNotDeleted(@Param ("category") String category);
+    @Query("SELECT i FROM InteractionTable i WHERE LOWER(i.category) = LOWER(:category) AND i.deletedAt IS NULL")
+    List<InteractionTable> findByCategoryAndNotDeleted(@Param("category") String category);
 
     Optional<InteractionTable> findByTestcaseId(UUID testcaseId);
 }

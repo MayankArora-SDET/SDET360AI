@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.CookieValue;
+import java.util.Map;
 
 import javax.validation.Valid;
 import java.util.UUID;
@@ -33,6 +36,12 @@ public class AuthController {
 
     @Autowired
     private JwtCookieManager jwtCookieManager;
+
+    @GetMapping("/check-session")
+    public ResponseEntity<Map<String, Boolean>> checkSession(@CookieValue(value = "session", required = false) String sessionCookie) {
+        boolean hasSession = sessionCookie != null && !sessionCookie.isEmpty();
+        return ResponseEntity.ok(Map.of("session", hasSession));
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,
