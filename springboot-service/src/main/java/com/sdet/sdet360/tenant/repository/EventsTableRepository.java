@@ -15,4 +15,9 @@ public interface EventsTableRepository extends JpaRepository<EventsTable, UUID> 
     
     @Query("SELECT e FROM EventsTable e WHERE e.interaction.testcaseId = :testcaseId")
     List<EventsTable> findByTestcaseId(UUID testcaseId);
+    
+    @Query("DELETE FROM EventsTable e WHERE e.interaction.testcaseId = :testcaseId")
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    void deleteByTestcaseId(UUID testcaseId);
 }

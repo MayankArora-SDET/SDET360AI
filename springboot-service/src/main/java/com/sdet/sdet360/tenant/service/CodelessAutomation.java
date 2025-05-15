@@ -492,4 +492,40 @@ public List<TestExecutionResultDto> runMultipleTestCases(List<String> testCaseId
     );
     
     return methods.runMultipleTestCases(testCaseIds, seleniumTestExecutor);
-}}
+}
+
+/**
+ * Update events for a test case
+ *
+ * @param testCaseId The ID of the test case to update
+ * @param events The updated list of events
+ * @return A message indicating success
+ */
+public String updateEvents(String testCaseId, List<EventDto> events) {
+    logger.info("Service: Updating events for test case ID: {}", testCaseId);
+    
+    // Parse the test case ID
+    UUID testCaseUuid;
+    try {
+        testCaseUuid = UUID.fromString(testCaseId);
+    } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Invalid test case ID format");
+    }
+    
+    // Find the test case
+    InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
+            .orElseThrow(() -> new IllegalArgumentException("Test case not found: " + testCaseId));
+    
+    // Delete existing events for this test case
+    eventsTableRepository.deleteByTestcaseId(testCaseUuid);
+    
+    // Save the updated events
+    saveEvents(events, testCase, false);
+    
+    // Update the last modified timestamp
+    testCase.setUpdatedAt(LocalDateTime.now());
+    interactionTableRepository.save(testCase);
+    
+    return "Test case events updated successfully";
+    }
+}

@@ -1,6 +1,10 @@
 package com.sdet.sdet360.tenant.controller;
 
+import com.sdet.sdet360.config.annotation.SafeUUID;
 import com.sdet.sdet360.tenant.dto.*;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import com.sdet.sdet360.tenant.exception.TokenGenerationException;
 import com.sdet.sdet360.tenant.exception.TokenValidationException;
 import com.sdet.sdet360.tenant.service.CodelessAutomation;
@@ -11,9 +15,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * REST Controller for token generation and validation
@@ -40,11 +51,10 @@ public class CodelessAutomationController {
      * @throws TokenGenerationException if token generation fails
      */
     @PostMapping("/{verticalId}/generate")
-    public ResponseEntity<TokenResponseDto> generateToken(@PathVariable String verticalId, @Valid @RequestBody TokenRequestDto request)
+    public ResponseEntity<TokenResponseDto> generateToken(@PathVariable @SafeUUID UUID verticalId, @Valid @RequestBody TokenRequestDto request)
             throws TokenGenerationException {
         logger.info("Token generation request received for URL: {}", request.getUrl());
-        UUID verId = UUID.fromString(verticalId);
-        String token = codelessAutomation.generateToken(verId, request);
+        String token = codelessAutomation.generateToken(verticalId, request);
         logger.debug("Token generated successfully");
 
         return ResponseEntity.ok(TokenResponseDto.success(token));
@@ -86,7 +96,7 @@ public class CodelessAutomationController {
      */
     @GetMapping("/{verticalId}/recorded-test-cases")
     public ResponseEntity<Map<String, List<TestCaseWithEventsDto>>> getRecordedTestCases(
-            @PathVariable UUID verticalId, @RequestParam(required = false) String category) {
+            @PathVariable @SafeUUID UUID verticalId, @RequestParam(required = false) String category) {
 
         logger.info("Controller: Retrieving test cases with category filter: {}", category);
 
@@ -104,7 +114,7 @@ public class CodelessAutomationController {
      */
     @PutMapping("/{verticalId}/update-test-case-category")
     public ResponseEntity<Map<String, String>> updateTestCaseCategory(
-            @PathVariable UUID verticalId,
+            @PathVariable @SafeUUID UUID verticalId,
             @RequestBody UpdateCategoryRequestDto request) {
 
         logger.info("Controller: Updating category for test case ID: {} to {}", 
@@ -131,7 +141,7 @@ public class CodelessAutomationController {
      */
     @GetMapping("/{verticalId}/test-case-events/{testCaseId}")
     public ResponseEntity<?> getTestCaseEvents(
-            @PathVariable UUID verticalId,
+            @PathVariable @SafeUUID UUID verticalId,
             @PathVariable String testCaseId) {
 
         logger.info("Controller: Retrieving events for test case ID: {}", testCaseId);
@@ -149,6 +159,83 @@ public class CodelessAutomationController {
     }
 
     /**
+     * Get screenshots for a test case
+     *
+     * @param testCaseId Test case ID
+     * @return List of screenshot URLs
+     */
+    @GetMapping("/captured_screenshots/{testCaseId}")
+    public ResponseEntity<?> getScreenshots(@PathVariable String testCaseId) {
+        logger.info("Controller: Retrieving screenshots for test case ID: {}", testCaseId);
+        
+        try {
+            // Define the screenshots directory based on the same path used in SeleniumTestExecutor
+            String screenshotsBaseDir = System.getProperty("user.home") + "/sdet360/screenshots";
+            Path testCaseFolder = Paths.get(screenshotsBaseDir, testCaseId);
+            
+            if (!Files.exists(testCaseFolder)) {
+                return ResponseEntity.ok(Map.of("error", "No screenshots found for this test case"));
+            }
+            
+            // Get all PNG files in the directory
+            List<String> screenshotFiles = Files.list(testCaseFolder)
+                    .filter(path -> path.toString().endsWith(".png"))
+                    .map(path -> path.getFileName().toString())
+                    .collect(Collectors.toList());
+            
+            if (screenshotFiles.isEmpty()) {
+                return ResponseEntity.ok(Map.of("error", "No screenshots found for this test case"));
+            }
+            
+            // Prepare the list of screenshot URLs
+            List<String> screenshots = new ArrayList<>();
+            for (String filename : screenshotFiles) {
+                String screenshotUrl = "/static/screenshots/" + testCaseId + "/" + filename;
+                screenshots.add(screenshotUrl);
+            }
+            
+            return ResponseEntity.ok(Map.of("screenshots", screenshots));
+        } catch (IOException e) {
+            logger.error("Error retrieving screenshots: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to retrieve screenshots: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Serve screenshot images
+     *
+     * @param testCaseId Test case ID
+     * @param filename Screenshot filename
+     * @return The screenshot image file
+     */
+    @GetMapping(value = "/static/screenshots/{testCaseId}/{filename}", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<Resource> serveScreenshot(
+            @PathVariable String testCaseId,
+            @PathVariable String filename) {
+        
+        logger.info("Controller: Serving screenshot {} for test case ID: {}", filename, testCaseId);
+        
+        try {
+            logger.info("Controller: Serving screenshot from {} name: {} for test case ID: {}", System.getProperty("user.home"), filename, testCaseId);
+
+            String screenshotsBaseDir = System.getProperty("user.home") + "/sdet360/screenshots";
+            Path testCaseFolder = Paths.get(screenshotsBaseDir, testCaseId);
+            Path filePath = testCaseFolder.resolve(filename);
+            
+            if (!Files.exists(filePath)) {
+                logger.error("Screenshot file not found: {}", filePath);
+                return ResponseEntity.notFound().build();
+            }
+            
+            Resource resource = new FileSystemResource(filePath.toFile());
+            return ResponseEntity.ok(resource);
+        } catch (Exception e) {
+            logger.error("Error serving screenshot: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    /**
      * Run multiple test cases
      *
      * @param verticalId Vertical ID
@@ -157,7 +244,7 @@ public class CodelessAutomationController {
      */
     @PostMapping("/{verticalId}/run-multiple-test-cases")
     public ResponseEntity<?> runMultipleTestCases(
-            @PathVariable UUID verticalId,
+            @PathVariable @SafeUUID UUID verticalId,
             @RequestBody RunMultipleTestCasesRequestDto request) {
 
         logger.info("Controller: Running multiple test cases: {}", request.getTestCaseIds());
@@ -174,6 +261,32 @@ public class CodelessAutomationController {
         }
     }
     
+    /**
+     * Update events for a test case
+     *
+     * @param verticalId Vertical ID
+     * @param request Request containing test case ID and updated events
+     * @return Success message
+     */
+    @PutMapping("/{verticalId}/update_event")
+    public ResponseEntity<?> updateEvent(
+            @PathVariable @SafeUUID UUID verticalId,
+            @RequestBody UpdateEventRequestDto request) {
+
+        logger.info("Controller: Updating events for test case ID: {}", request.getTestCaseId());
+
+        try {
+            String result = codelessAutomation.updateEvents(request.getTestCaseId(), request.getEvents());
+            return ResponseEntity.ok(Map.of("message", result));
+        } catch (IllegalArgumentException e) {
+            logger.error("Error updating events: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Unexpected error updating events: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred"));
+        }
+    }
+
     /**
      * Record interaction log with events
      *
