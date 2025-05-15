@@ -19,7 +19,7 @@ This comprehensive guide will walk you through setting up and running the SDET36
 
 2. Clone the SDET360 repository:
    ```powershell
-   git clone https://github.com/your-org/sdet360.git
+   git clone https://github.com/MayankArora-SDET/SDET360AI.git
    cd sdet360
    ```
 
