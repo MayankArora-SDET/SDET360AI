@@ -59,6 +59,11 @@ class AiServiceStub(object):
                 request_serializer=ai__service__pb2.AiRequest.SerializeToString,
                 response_deserializer=ai__service__pb2.AiResponse.FromString,
                 _registered_method=True)
+        self.PromptBasedAutomation = channel.unary_unary(
+                '/ai.sdet360.AiService/PromptBasedAutomation',
+                request_serializer=ai__service__pb2.AiRequest.SerializeToString,
+                response_deserializer=ai__service__pb2.AiResponse.FromString,
+                _registered_method=True)
 
 
 class AiServiceServicer(object):
@@ -94,6 +99,12 @@ class AiServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def PromptBasedAutomation(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AiServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -119,6 +130,11 @@ def add_AiServiceServicer_to_server(servicer, server):
             ),
             'GenerateJiraStories': grpc.unary_unary_rpc_method_handler(
                     servicer.GenerateJiraStories,
+                    request_deserializer=ai__service__pb2.AiRequest.FromString,
+                    response_serializer=ai__service__pb2.AiResponse.SerializeToString,
+            ),
+            'PromptBasedAutomation': grpc.unary_unary_rpc_method_handler(
+                    servicer.PromptBasedAutomation,
                     request_deserializer=ai__service__pb2.AiRequest.FromString,
                     response_serializer=ai__service__pb2.AiResponse.SerializeToString,
             ),
@@ -256,6 +272,33 @@ class AiService(object):
             request,
             target,
             '/ai.sdet360.AiService/GenerateJiraStories',
+            ai__service__pb2.AiRequest.SerializeToString,
+            ai__service__pb2.AiResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def PromptBasedAutomation(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/ai.sdet360.AiService/PromptBasedAutomation',
             ai__service__pb2.AiRequest.SerializeToString,
             ai__service__pb2.AiResponse.FromString,
             options,
