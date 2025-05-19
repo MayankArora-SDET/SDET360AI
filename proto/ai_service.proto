@@ -12,6 +12,7 @@ service AiService {
   rpc ProcessDocument (DocumentRequest) returns (DocumentResponse) {}
   rpc GenerateApiTestingScenarios(AiRequest) returns (AiResponse) {}
   rpc GenerateJiraStories(AiRequest) returns (AiResponse) {}
+  rpc PromptBasedAutomation (AiRequest) returns (AiResponse) {}
 }
 
 message AiRequest {

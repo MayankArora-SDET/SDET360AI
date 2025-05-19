@@ -70,7 +70,8 @@ public class LocatorGeneratorService {
                 && !element.hasAttr("id")
                 && !element.hasAttr("name")
                 && !element.hasAttr("aria-label")
-                && !element.hasAttr("placeholder")) {
+                && !element.hasAttr("placeholder")
+                && element.attributes().asList().stream().noneMatch(a -> a.getKey().startsWith("data-"))) {
             return false;
         }
         return true;
@@ -101,6 +102,34 @@ public class LocatorGeneratorService {
     }
 
     private String generateLocator(Element element, String tool) {
+        String locator = null;
+
+        if ("cypress".equalsIgnoreCase(tool)) {
+            for (org.jsoup.nodes.Attribute attr : element.attributes()) {
+                if (attr.getKey().equalsIgnoreCase("data-automation-id") && !attr.getValue().isBlank()) {
+                    locator = String.format("[data-automation-id='%s']", attr.getValue());
+                    break;
+                }
+            }
+            if (locator == null && element.hasAttr("name")) {
+                locator = String.format("%s[name='%s']", element.tagName(), element.attr("name"));
+            } else if (locator == null && element.hasAttr("placeholder")) {
+                locator = String.format("%s[placeholder='%s']", element.tagName(), element.attr("placeholder"));
+            } else if (locator == null && element.hasAttr("aria-label")) {
+                locator = String.format("%s[aria-label='%s']", element.tagName(), element.attr("aria-label"));
+            } else if (locator == null && element.hasAttr("title")) {
+                locator = String.format("%s[title='%s']", element.tagName(), element.attr("title"));
+            } else if (locator == null && element.hasAttr("id")) {
+                locator = String.format("%s#%s", element.tagName(), element.attr("id"));
+            } else if (locator == null && !element.classNames().isEmpty()) {
+                locator = String.format("%s.%s", element.tagName(), element.classNames().iterator().next());
+            }
+
+            if (locator == null) return null;
+            return formatLocator(locator, tool);
+        }
+
+        // Default XPath-based locators
         String xpath = null;
         if (element.hasAttr("id")) {
             xpath = String.format("//%s[@id=\"%s\"]", element.tagName(), element.attr("id"));
@@ -136,6 +165,8 @@ public class LocatorGeneratorService {
                 return String.format("driver.find_element(By.XPATH, \"%s\")", xpath);
             case "robotframework":
                 return String.format("xpath=%s", xpath);
+            case "cypress":
+                return String.format("cy.get(\"%s\")", xpath);
             default:
                 throw new IllegalArgumentException("Unsupported tool: " + tool);
         }
