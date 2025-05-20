@@ -11,6 +11,71 @@ from app.llm import prompt_templates
 from app.llm.client_factory import LLMClientFactory
 
 class AiServiceServicer(ai_service_pb2_grpc.AiServiceServicer):
+    def GenerateResponseForCodeGeneratorWithText(self, request, context):
+        logging.info(f"Received gRPC test case with text request: {request}")
+        
+        # Try to get text from either prompt field or parameters
+        user_text = getattr(request, "prompt", "")
+        
+        # Check parameters for text if prompt is empty
+        if not user_text and hasattr(request, 'parameters') and 'text' in request.parameters:
+            user_text = request.parameters['text']
+        
+        model = "grok"
+        metadata = {"mode": "text_based_test_generation"}
+        
+        # Get model from parameters if specified
+        if hasattr(request, 'parameters') and request.parameters.get("model"):
+            model = request.parameters.get("model")
+        
+        # Validate input
+        if not user_text:
+            error_msg = "Text content is required for test case generation. Provide 'prompt' or 'text' in parameters."
+            logging.error(error_msg)
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details(error_msg)
+            return ai_service_pb2.AiResponse(metadata=metadata)
+        
+        # Get tenant ID if available
+        tenant_id = getattr(request, "tenant_id", "unknown")
+        logging.info(f"Processing request for tenant: {tenant_id}, model: {model}")
+        
+        try:
+            # Import prompt template
+            from app.llm.prompt import TEST_CASE_GENERATOR_WITH_TEXT
+            
+            # Format the prompt with the user's text
+            formatted_prompt = TEST_CASE_GENERATOR_WITH_TEXT.format(user_text=user_text)
+            logging.debug(f"Formatted prompt: {formatted_prompt[:200]}...")  # Log first 200 chars
+            
+            # Get LLM client and generate response
+            client = LLMClientFactory.get_client(model)
+            messages = [{"role": "user", "content": formatted_prompt}]
+            ai_text = client.chat(messages)
+            
+            if not ai_text:
+                raise ValueError("Empty response received from LLM")
+                
+            logging.info(f"Successfully generated response of length: {len(ai_text)}")
+            
+            # Return successful response
+            return ai_service_pb2.AiResponse(
+                response_text=ai_text,
+                confidence_score=1.0,
+                metadata=metadata
+            )
+            
+        except Exception as e:
+            error_msg = f"Error generating response: {str(e)}"
+            logging.error(error_msg, exc_info=True)
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(error_msg)
+            return ai_service_pb2.AiResponse(
+                response_text="",
+                confidence_score=0.0,
+                metadata={"error": error_msg}
+            )
+
     def GenerateResponseForGeneralChat(self, request, context):
         logging.info(f"Received gRPC general chat request: {request}")
         prompt = getattr(request, "prompt", None)
@@ -53,7 +118,7 @@ class AiServiceServicer(ai_service_pb2_grpc.AiServiceServicer):
             description_text = desc
         )
         logging.info(f"Using template {tpl_name}: {prompt}")
-        model = request.parameters.get("model", "grok")
+        model = request.parameters.get("model", "ollama")
         client = LLMClientFactory.get_client(model)
         try:
             ai_text = client.chat([{"role":"user","content":prompt}])

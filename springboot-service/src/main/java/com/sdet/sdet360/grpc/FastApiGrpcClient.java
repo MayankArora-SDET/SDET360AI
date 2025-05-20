@@ -3,12 +3,17 @@ package com.sdet.sdet360.grpc;
 import com.sdet.sdet360.grpc.generated.AiRequest;
 import com.sdet.sdet360.grpc.generated.AiResponse;
 import com.sdet.sdet360.grpc.generated.AiServiceGrpc;
+import io.grpc.ManagedChannel;
+import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.Map;
 import com.sdet.sdet360.grpc.generated.DocumentRequest;
 import com.sdet.sdet360.grpc.generated.DocumentResponse;
 import com.sdet.sdet360.config.TenantContextHolder;
 import io.grpc.ManagedChannel;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
