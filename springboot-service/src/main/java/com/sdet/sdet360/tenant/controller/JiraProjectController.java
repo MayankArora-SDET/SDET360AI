@@ -195,6 +195,49 @@ public class JiraProjectController {
         
         logger.info("[JiraProjectController] Found vertical: {} with Jira URL: {}", verticalId, verticalOpt.get().getJiraServerUrl());
         Vertical vertical = verticalOpt.get();
+        
+        // Validate that all issue keys are of the same issue type
+        Map<String, String> issueTypeMap = new HashMap<>();
+        boolean allSameType = true;
+        
+        logger.info("[JiraProjectController] Validating issue types for all keys: {}", issueKeys);
+        for (String issueKey : issueKeys) {
+            try {
+                JsonNode issue = jiraApiService.fetchIssueByKey(issueKey, 
+                        vertical.getJiraServerUrl(),
+                        vertical.getJiraUsername(),
+                        vertical.getApiKey());
+                
+                String actualIssueType = issue.path("fields").path("issuetype").path("name").asText("");
+                issueTypeMap.put(issueKey, actualIssueType);
+                
+                logger.info("[JiraProjectController] Issue {} has type: {}", issueKey, actualIssueType);
+                
+                if (!issueType.equalsIgnoreCase(actualIssueType)) {
+                    allSameType = false;
+                }
+            } catch (Exception e) {
+                logger.error("[JiraProjectController] Error fetching issue {}: {}", issueKey, e.getMessage());
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Error fetching issue " + issueKey + ": " + e.getMessage());
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+        }
+        
+        if (!allSameType) {
+            logger.warn("[JiraProjectController] Not all issues are of type: {}", issueType);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Not all issues are of type: " + issueType);
+            
+            // Add details about each issue's type
+            Map<String, String> issueDetails = new HashMap<>();
+            for (Map.Entry<String, String> entry : issueTypeMap.entrySet()) {
+                issueDetails.put(entry.getKey(), entry.getValue());
+            }
+            errorResponse.put("issueTypes", issueDetails);
+            
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
         Map<String, Object> filteredResponse = new HashMap<>();
         
         // Special handling for Epic issue type
