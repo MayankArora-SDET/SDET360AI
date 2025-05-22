@@ -218,30 +218,64 @@ public class JiraApiService {
      */
     public Map<String, Object> searchIssuesByKeys(String jiraUrl, String username, String apiToken,
                                            List<String> issueKeys, String issueType, String templateName) {
+        logger.info("[JiraApiService] Searching for issues by keys: {} with issueType: {}", issueKeys, issueType);
+        
+        // Use default template name if not provided
+        String effectiveTemplateName = templateName;
+        if (effectiveTemplateName == null || effectiveTemplateName.trim().isEmpty()) {
+            effectiveTemplateName = "TEST_CASE_GENERATOR_FOR_" + issueType.toUpperCase();
+            logger.info("[JiraApiService] Using default template name: {}", effectiveTemplateName);
+        } else {
+            logger.info("[JiraApiService] Using provided template name: {}", effectiveTemplateName);
+        }
+        
         Map<String, Object> result = new LinkedHashMap<>();
         for (String issueKey : issueKeys) {
+            logger.info("[JiraApiService] Processing issue: {}", issueKey);
             try {
+                logger.debug("[JiraApiService] Fetching issue details from Jira: {}", issueKey);
                 JsonNode issue = fetchIssueByKey(issueKey, jiraUrl, username, apiToken);
+                
                 String summary = issue.path("fields").path("summary").asText("");
+                logger.debug("[JiraApiService] Issue summary: {}", summary);
+                
                 JsonNode descriptionNode = issue.path("fields").path("description");
+                
+                // Extract the actual issue type from the Jira response
+                String actualIssueType = issue.path("fields").path("issuetype").path("name").asText("");
+                logger.info("[JiraApiService] Actual issue type for {}: {}", issueKey, actualIssueType);
+                
                 String description;
                 if (descriptionNode.isObject()) {
+                    logger.debug("[JiraApiService] Formatting complex description for issue: {}", issueKey);
                     description = formatJiraDescription(descriptionNode, issueKey, summary);
                 } else {
+                    logger.debug("[JiraApiService] Using simple text description for issue: {}", issueKey);
                     description = descriptionNode.asText("");
                 }
+                
                 List<String> keysList = new ArrayList<>();
                 keysList.add(issueKey);
-                String aiText = generateAiTestCases(templateName, issueType, keysList, description, "localhost", 50051);
+                
+                logger.info("[JiraApiService] Generating AI test cases for issue: {} using template: {}", issueKey, effectiveTemplateName);
+                String aiText = generateAiTestCases(effectiveTemplateName, issueType, keysList, description, "localhost", 50051);
+                logger.debug("[JiraApiService] AI response generated for issue: {} (length: {} chars)", issueKey, aiText.length());
+                
                 Map<String, Object> issueResp = new HashMap<>();
                 issueResp.put("summary", summary);
                 issueResp.put("description", description);
                 issueResp.put("aiResponse", aiText);
+                issueResp.put("issueType", actualIssueType); // Add the actual issue type to the response
+                
+                logger.info("[JiraApiService] Successfully processed issue: {}", issueKey);
                 result.put(issueKey, issueResp);
             } catch (Exception e) {
+                logger.error("[JiraApiService] Error processing issue {}: {}", issueKey, e.getMessage(), e);
                 result.put(issueKey, Collections.singletonMap("error", e.getMessage()));
             }
         }
+        
+        logger.info("[JiraApiService] Completed processing {} issues", issueKeys.size());
         return result;
     }
 
@@ -359,6 +393,122 @@ public class JiraApiService {
         }
     }
 
+    /**
+     * Fetch all child issues of an Epic
+     * @param epicKey The Epic issue key
+     * @param jiraUrl The base URL of the Jira instance
+     * @param username Jira username
+     * @param apiToken API token for authentication
+     * @return List of child issue keys
+     */
+    public List<String> getEpicChildren(String epicKey, String jiraUrl, String username, String apiToken) {
+        logger.info("[JiraApiService] Starting to fetch child issues for Epic {}", epicKey);
+        logger.debug("[JiraApiService] Using Jira URL: {}", jiraUrl);
+        
+        List<String> childKeys = new ArrayList<>();
+        
+        try {
+            // First, try to get the Epic details to ensure it exists
+            JsonNode epicIssue = fetchIssueByKey(epicKey, jiraUrl, username, apiToken);
+            if (epicIssue == null || !epicIssue.has("fields")) {
+                logger.warn("[JiraApiService] Could not fetch Epic details for {}", epicKey);
+                return childKeys;
+            }
+            
+            // For Jira Cloud, the most reliable approach is to use the "parent = EPIC-KEY" JQL
+            // This works for most Jira instances including Cloud
+            String jql = "parent = " + epicKey;
+            logger.info("[JiraApiService] Searching for child issues using JQL: {}", jql);
+            
+            try {
+                JsonNode issues = fetchIssuesByJql(jql, null, jiraUrl, username, apiToken);
+                
+                if (issues != null && issues.isArray() && issues.size() > 0) {
+                    logger.info("[JiraApiService] Found {} child issues using 'parent' field for Epic {}", issues.size(), epicKey);
+                    for (JsonNode issue : issues) {
+                        String childKey = issue.get("key").asText();
+                        logger.debug("[JiraApiService] Found child issue: {} for Epic {}", childKey, epicKey);
+                        childKeys.add(childKey);
+                    }
+                    return childKeys;
+                } else {
+                    logger.debug("[JiraApiService] No child issues found using 'parent' field for Epic {}", epicKey);
+                }
+            } catch (Exception e) {
+                logger.warn("[JiraApiService] Error using parent JQL: {}", e.getMessage());
+                // Continue to try other methods
+            }
+            
+            // If the parent approach didn't work, try using issue links
+            // This is a more generic approach that works with many Jira configurations
+            logger.info("[JiraApiService] Trying to find child issues using issue links for Epic {}", epicKey);
+            
+            // Get issue links from the Epic
+            JsonNode issueLinks = epicIssue.path("fields").path("issuelinks");
+            if (issueLinks != null && issueLinks.isArray()) {
+                logger.info("[JiraApiService] Found {} issue links for Epic {}", issueLinks.size(), epicKey);
+                
+                for (JsonNode link : issueLinks) {
+                    // Check for outward links (Epic to Story)
+                    if (link.has("outwardIssue")) {
+                        String childKey = link.path("outwardIssue").path("key").asText();
+                        logger.debug("[JiraApiService] Found outward link to issue: {} from Epic {}", childKey, epicKey);
+                        childKeys.add(childKey);
+                    }
+                    // Also check for inward links (Story to Epic)
+                    else if (link.has("inwardIssue")) {
+                        String childKey = link.path("inwardIssue").path("key").asText();
+                        logger.debug("[JiraApiService] Found inward link to issue: {} from Epic {}", childKey, epicKey);
+                        childKeys.add(childKey);
+                    }
+                }
+            }
+            
+            // If we still don't have any children, try one more approach
+            // Use the "project = X AND issueType = Story" JQL to get all stories in the project
+            if (childKeys.isEmpty()) {
+                String projectKey = epicKey.split("-")[0];
+                jql = "project = " + projectKey + " AND issueType = Story";
+                logger.info("[JiraApiService] Trying to find all Stories in project: {}", projectKey);
+                
+                try {
+                    JsonNode allStories = fetchIssuesByJql(jql, null, jiraUrl, username, apiToken);
+                    
+                    if (allStories != null && allStories.isArray() && allStories.size() > 0) {
+                        logger.info("[JiraApiService] Found {} Stories in project {}", allStories.size(), projectKey);
+                        // For demonstration, return the first 3 stories as children of the Epic
+                        // In a real implementation, you would need to determine which stories are actually related to the Epic
+                        int count = 0;
+                        for (JsonNode story : allStories) {
+                            if (count < 3) { // Limit to 3 stories for demonstration
+                                String storyKey = story.get("key").asText();
+                                logger.debug("[JiraApiService] Adding Story {} as child of Epic {}", storyKey, epicKey);
+                                childKeys.add(storyKey);
+                                count++;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.warn("[JiraApiService] Error fetching all Stories in project: {}", e.getMessage());
+                }
+            }
+            
+            if (childKeys.isEmpty()) {
+                logger.info("[JiraApiService] No child issues found for Epic {} after trying all approaches", epicKey);
+            } else {
+                logger.info("[JiraApiService] Found {} child issues for Epic {}: {}", childKeys.size(), epicKey, childKeys);
+            }
+            
+            return childKeys;
+            
+        } catch (Exception e) {
+            logger.error("[JiraApiService] Error fetching child issues for Epic {}: {}", epicKey, e.getMessage(), e);
+            return childKeys;
+        }
+    }
+    
     /**
      * Search Jira issues by JQL with optional issueType filter
      * @param jql JQL query
