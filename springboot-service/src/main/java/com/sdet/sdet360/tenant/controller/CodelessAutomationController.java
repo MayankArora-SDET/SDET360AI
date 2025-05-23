@@ -315,5 +315,33 @@ public class CodelessAutomationController {
             logger.error("Error recording interactions: {}", e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Failed to record interactions: " + e.getMessage()));
         }
+}
+
+/**
+ * Delete a test case
+ *
+ * @param request Request containing test case ID to delete
+ * @return Success message
+ */
+@PostMapping("/delete_test_case")
+public ResponseEntity<?> deleteTestCase(@RequestBody Map<String, String> request) {
+    String testCaseId = request.get("testCaseId");
+    logger.info("Controller: Deleting test case ID: {}", testCaseId);
+    
+    if (testCaseId == null || testCaseId.isEmpty()) {
+        return ResponseEntity.badRequest().body(Map.of("error", "Test case ID is required"));
     }
+    
+    try {
+        String result = codelessAutomation.deleteTestCase(testCaseId);
+        return ResponseEntity.ok(Map.of("message", result));
+    } catch (IllegalArgumentException e) {
+        logger.error("Error deleting test case: {}", e.getMessage());
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+    } catch (Exception e) {
+        logger.error("Unexpected error deleting test case: {}", e.getMessage(), e);
+        return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred"));
+    }
+
+}
 }

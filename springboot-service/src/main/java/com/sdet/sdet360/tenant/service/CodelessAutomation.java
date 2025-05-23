@@ -548,4 +548,33 @@ public String updateEvents(String testCaseId, List<EventDto> events) {
     
     return "Test case events updated successfully";
     }
+    
+/**
+ * Delete a test case by setting its deletedAt timestamp
+ *
+ * @param testCaseId The ID of the test case to delete
+ * @return A message indicating success
+ */
+@Transactional
+public String deleteTestCase(String testCaseId) {
+    logger.info("Service: Deleting test case ID: {}", testCaseId);
+    
+    // Parse the test case ID
+    UUID testCaseUuid;
+    try {
+        testCaseUuid = UUID.fromString(testCaseId);
+    } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Invalid test case ID format");
+    }
+    
+    // Find the test case
+    InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
+            .orElseThrow(() -> new IllegalArgumentException("Test case not found: " + testCaseId));
+    
+    // Soft delete the test case by setting deletedAt timestamp
+    testCase.setDeletedAt(LocalDateTime.now());
+    interactionTableRepository.save(testCase);
+    
+    return "Test case deleted successfully";
+}
 }
