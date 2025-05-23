@@ -73,7 +73,7 @@ public class TenantService {
 
         try {
             createTenantDatabase(dbName);
-            tenant.setDbUrl("jdbc:postgresql://localhost:5432/" + dbName);
+            tenant.setDbUrl(tenant.getDbUrl().isEmpty() ? "jdbc:postgresql://localhost:5432/" + dbName : tenant.getDbUrl());
             tenant.setDbUsername(adminUsername);
             tenant.setDbPassword(adminPassword);
 

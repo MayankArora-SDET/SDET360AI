@@ -13,6 +13,7 @@ service AiService {
   rpc GenerateApiTestingScenarios(AiRequest) returns (AiResponse) {}
   rpc GenerateJiraStories(AiRequest) returns (AiResponse) {}
   rpc PromptBasedAutomation (AiRequest) returns (AiResponse) {}
+  rpc GenerateResponseForCodeGeneratorWithText(AiRequest) returns (AiResponse) {}
 }
 
 message AiRequest {

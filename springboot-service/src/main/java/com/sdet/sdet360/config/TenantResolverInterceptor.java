@@ -69,6 +69,24 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
                     logger.error("No tenants found in system.");
                     throw new IllegalStateException("No tenants found in the system. Please create at least one tenant.");
                 }
+            } else if ("sdet360.ai".equals(serverName)) {
+                Optional<Tenant> firstTenant = tenantRepository.findAll().stream().findFirst();
+                if (firstTenant.isPresent()) {
+                    logger.warn("No domain matched, defaulting to first tenant: {}", firstTenant.get().getTenantId());
+                    TenantContextHolder.setTenantId(firstTenant.get().getTenantId());
+                } else {
+                    logger.error("No tenants found in system.");
+                    throw new IllegalStateException("No tenants found in the system. Please create at least one tenant.");
+                }
+            }else if ("sdet360".equals(serverName)) {
+                Optional<Tenant> firstTenant = tenantRepository.findAll().stream().findFirst();
+                if (firstTenant.isPresent()) {
+                    logger.warn("No domain matched, defaulting to first tenant: {}", firstTenant.get().getTenantId());
+                    TenantContextHolder.setTenantId(firstTenant.get().getTenantId());
+                } else {
+                    logger.error("No tenants found in system.");
+                    throw new IllegalStateException("No tenants found in the system. Please create at least one tenant.");
+                }
             } else {
                 logger.error("Unknown tenant domain: {}", serverName);
                 throw new IllegalArgumentException("Unknown tenant domain: " + serverName);
