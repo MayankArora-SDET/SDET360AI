@@ -268,6 +268,55 @@ Ensure that:
             metadata=metadata
         )
     
+    def PromptBasedAutomation(self, request, context):
+
+        logging.info(f"Received user prompt for automation: {request}")
+        user_prompt = request.parameters.get("user_prompt", "")
+        formatted_locators = request.parameters.get("formatted_locators", "")
+
+        metadata = {"template_name": "PROMPT_BASED_AUTOMATION"}
+
+        # Final Prompt
+        prompt = f"""
+    User Instructions:
+    {user_prompt}
+
+    Locators:
+    {formatted_locators}
+
+    Generate a complete Robot Framework script that strictly follows the exact sequence of actions provided in the user_instructions. Do not reorder, omit, or infer any steps. Use the given locators exactly as specified, with 'xpath=' included where applicable.
+    Before performing any action on an element, add a 'Wait Until Element Is Visible' step using the same locator.
+    Locators must be used exactly as retrieved from the source URL, preserving original casing and formatting, without any alterations such as capitalization or lowercasing.
+    This requirement applies to both the full XPath and all attribute values within it. Do not modify attribute values (e.g., do not change 'male' to 'Male') under any circumstances.
+    Set the Selenium execution speed to 0.1 seconds using the appropriate Robot Framework keyword at the beginning of the test case.
+    The script must be minimal and contain only:
+    *** Settings ***
+    Library           SeleniumLibrary
+
+    *** Test Cases ***
+    [Test Case Name]
+    [Sequence of Robot Framework keywords with inputs as specified]
+    No explanations, markdown, or comments. Output must be plain Robot Framework code only, directly executable.
+    """
+
+        try:
+            client = LLMClientFactory.get_client("grok")
+            ai_text = client.chat([{"role": "user", "content": prompt}])
+        except Exception as e:
+            logging.error(f"LLM error: {str(e)}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            return ai_service_pb2.AiResponse()
+        
+        if not ai_text:
+            ai_text = "No response from LLM."
+
+        return ai_service_pb2.AiResponse(
+            response_text=ai_text,
+            confidence_score=1.0,
+            metadata=metadata
+        )
+
     def ProcessDocument(self, request, context):
         return ai_service_pb2.DocumentResponse(
             processed_content=f"Processed: {request.document_content}",

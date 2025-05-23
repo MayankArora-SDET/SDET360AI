@@ -171,6 +171,37 @@ public final class AiServiceGrpc {
   }
 
   private static volatile io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest,
+      com.sdet.sdet360.grpc.generated.AiResponse> getPromptBasedAutomationMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "PromptBasedAutomation",
+      requestType = com.sdet.sdet360.grpc.generated.AiRequest.class,
+      responseType = com.sdet.sdet360.grpc.generated.AiResponse.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest,
+      com.sdet.sdet360.grpc.generated.AiResponse> getPromptBasedAutomationMethod() {
+    io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest, com.sdet.sdet360.grpc.generated.AiResponse> getPromptBasedAutomationMethod;
+    if ((getPromptBasedAutomationMethod = AiServiceGrpc.getPromptBasedAutomationMethod) == null) {
+      synchronized (AiServiceGrpc.class) {
+        if ((getPromptBasedAutomationMethod = AiServiceGrpc.getPromptBasedAutomationMethod) == null) {
+          AiServiceGrpc.getPromptBasedAutomationMethod = getPromptBasedAutomationMethod =
+              io.grpc.MethodDescriptor.<com.sdet.sdet360.grpc.generated.AiRequest, com.sdet.sdet360.grpc.generated.AiResponse>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "PromptBasedAutomation"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.sdet.sdet360.grpc.generated.AiRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.sdet.sdet360.grpc.generated.AiResponse.getDefaultInstance()))
+              .setSchemaDescriptor(new AiServiceMethodDescriptorSupplier("PromptBasedAutomation"))
+              .build();
+        }
+      }
+    }
+    return getPromptBasedAutomationMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<com.sdet.sdet360.grpc.generated.AiRequest,
       com.sdet.sdet360.grpc.generated.AiResponse> getGenerateResponseForCodeGeneratorWithTextMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
@@ -286,6 +317,13 @@ public final class AiServiceGrpc {
 
     /**
      */
+    default void promptBasedAutomation(com.sdet.sdet360.grpc.generated.AiRequest request,
+        io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getPromptBasedAutomationMethod(), responseObserver);
+    }
+
+    /**
+     */
     default void generateResponseForCodeGeneratorWithText(com.sdet.sdet360.grpc.generated.AiRequest request,
         io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse> responseObserver) {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getGenerateResponseForCodeGeneratorWithTextMethod(), responseObserver);
@@ -361,6 +399,14 @@ public final class AiServiceGrpc {
 
     /**
      */
+    public void promptBasedAutomation(com.sdet.sdet360.grpc.generated.AiRequest request,
+        io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getPromptBasedAutomationMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
     public void generateResponseForCodeGeneratorWithText(com.sdet.sdet360.grpc.generated.AiRequest request,
         io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse> responseObserver) {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
@@ -417,6 +463,13 @@ public final class AiServiceGrpc {
     public com.sdet.sdet360.grpc.generated.AiResponse generateJiraStories(com.sdet.sdet360.grpc.generated.AiRequest request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getGenerateJiraStoriesMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.sdet.sdet360.grpc.generated.AiResponse promptBasedAutomation(com.sdet.sdet360.grpc.generated.AiRequest request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getPromptBasedAutomationMethod(), getCallOptions(), request);
     }
 
     /**
@@ -485,6 +538,14 @@ public final class AiServiceGrpc {
 
     /**
      */
+    public com.google.common.util.concurrent.ListenableFuture<com.sdet.sdet360.grpc.generated.AiResponse> promptBasedAutomation(
+        com.sdet.sdet360.grpc.generated.AiRequest request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getPromptBasedAutomationMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
     public com.google.common.util.concurrent.ListenableFuture<com.sdet.sdet360.grpc.generated.AiResponse> generateResponseForCodeGeneratorWithText(
         com.sdet.sdet360.grpc.generated.AiRequest request) {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
@@ -497,7 +558,8 @@ public final class AiServiceGrpc {
   private static final int METHODID_PROCESS_DOCUMENT = 2;
   private static final int METHODID_GENERATE_API_TESTING_SCENARIOS = 3;
   private static final int METHODID_GENERATE_JIRA_STORIES = 4;
-  private static final int METHODID_GENERATE_RESPONSE_FOR_CODE_GENERATOR_WITH_TEXT = 5;
+  private static final int METHODID_PROMPT_BASED_AUTOMATION = 5;
+  private static final int METHODID_GENERATE_RESPONSE_FOR_CODE_GENERATOR_WITH_TEXT = 6;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -534,6 +596,10 @@ public final class AiServiceGrpc {
           break;
         case METHODID_GENERATE_JIRA_STORIES:
           serviceImpl.generateJiraStories((com.sdet.sdet360.grpc.generated.AiRequest) request,
+              (io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse>) responseObserver);
+          break;
+        case METHODID_PROMPT_BASED_AUTOMATION:
+          serviceImpl.promptBasedAutomation((com.sdet.sdet360.grpc.generated.AiRequest) request,
               (io.grpc.stub.StreamObserver<com.sdet.sdet360.grpc.generated.AiResponse>) responseObserver);
           break;
         case METHODID_GENERATE_RESPONSE_FOR_CODE_GENERATOR_WITH_TEXT:
@@ -594,6 +660,13 @@ public final class AiServiceGrpc {
               com.sdet.sdet360.grpc.generated.AiResponse>(
                 service, METHODID_GENERATE_JIRA_STORIES)))
         .addMethod(
+          getPromptBasedAutomationMethod(),
+          io.grpc.stub.ServerCalls.asyncUnaryCall(
+            new MethodHandlers<
+              com.sdet.sdet360.grpc.generated.AiRequest,
+              com.sdet.sdet360.grpc.generated.AiResponse>(
+                service, METHODID_PROMPT_BASED_AUTOMATION)))
+        .addMethod(
           getGenerateResponseForCodeGeneratorWithTextMethod(),
           io.grpc.stub.ServerCalls.asyncUnaryCall(
             new MethodHandlers<
@@ -653,6 +726,7 @@ public final class AiServiceGrpc {
               .addMethod(getProcessDocumentMethod())
               .addMethod(getGenerateApiTestingScenariosMethod())
               .addMethod(getGenerateJiraStoriesMethod())
+              .addMethod(getPromptBasedAutomationMethod())
               .addMethod(getGenerateResponseForCodeGeneratorWithTextMethod())
               .build();
         }

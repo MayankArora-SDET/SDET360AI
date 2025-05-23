@@ -52,7 +52,7 @@ public class LocatorController {
     @PostMapping(value = "/generate_locators", consumes = {MediaType.TEXT_PLAIN_VALUE, MediaType.TEXT_HTML_VALUE})
     public ResponseEntity<Map<String, String>> generateLocatorsFromRawHtml(
             @PathVariable UUID verticalId,
-            @RequestParam String tool,
+            @RequestParam(defaultValue = "cypress") String tool,
             @RequestBody String html) {
         Optional<Vertical> verticalOpt = verticalRepository.findById(verticalId);
         if (!verticalOpt.isPresent()) {
@@ -74,7 +74,7 @@ public class LocatorController {
     public ResponseEntity<Map<String, String>> generateLocatorsFromUrl(
             @PathVariable UUID verticalId,
             @RequestParam String url,
-            @RequestParam(required = false, defaultValue = "selenium-java") String tool) {
+            @RequestParam(required = false, defaultValue = "cypress") String tool) {
         Optional<Vertical> verticalOpt = verticalRepository.findById(verticalId);
         if (!verticalOpt.isPresent()) {
             return ResponseEntity.notFound().build();
