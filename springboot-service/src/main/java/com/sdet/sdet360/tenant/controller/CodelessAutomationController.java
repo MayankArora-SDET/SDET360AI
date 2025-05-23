@@ -112,7 +112,7 @@ public class CodelessAutomationController {
      * @param request Update category request containing test case ID and new category
      * @return Success message
      */
-    @PutMapping("/{verticalId}/update-test-case-category")
+    @PutMapping("/{verticalId}/update_test_case_category")
     public ResponseEntity<Map<String, String>> updateTestCaseCategory(
             @PathVariable @SafeUUID UUID verticalId,
             @RequestBody UpdateCategoryRequestDto request) {

@@ -23,6 +23,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/jira-projects")
@@ -176,20 +177,223 @@ public class JiraProjectController {
             @RequestBody List<String> issueKeys,
             @RequestParam String issueType,
             @RequestParam(required = false) String templateName) {
+        logger.info("[JiraProjectController] Received request to search issues by keys: {} with issueType: {}", issueKeys, issueType);
+        
+        // Validate issue type
+        if (!isValidIssueType(issueType)) {
+            logger.warn("[JiraProjectController] Invalid issue type: {}", issueType);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Invalid issue type. Must be one of: Epic, Story, Bug");
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+        
         Optional<Vertical> verticalOpt = verticalRepository.findById(verticalId);
         if (!verticalOpt.isPresent()) {
+            logger.warn("[JiraProjectController] Vertical not found with ID: {}", verticalId);
             return ResponseEntity.notFound().build();
         }
+        
+        logger.info("[JiraProjectController] Found vertical: {} with Jira URL: {}", verticalId, verticalOpt.get().getJiraServerUrl());
         Vertical vertical = verticalOpt.get();
-        Map<String, Object> resp = jiraApiService.searchIssuesByKeys(
-                vertical.getJiraServerUrl(),
-                vertical.getJiraUsername(),
-                vertical.getApiKey(),
-                issueKeys,
-                issueType,
-                templateName
-        );
-        return ResponseEntity.ok(resp);
+        
+        // Validate that all issue keys are of the same issue type
+        Map<String, String> issueTypeMap = new HashMap<>();
+        boolean allSameType = true;
+        
+        logger.info("[JiraProjectController] Validating issue types for all keys: {}", issueKeys);
+        for (String issueKey : issueKeys) {
+            try {
+                JsonNode issue = jiraApiService.fetchIssueByKey(issueKey, 
+                        vertical.getJiraServerUrl(),
+                        vertical.getJiraUsername(),
+                        vertical.getApiKey());
+                
+                String actualIssueType = issue.path("fields").path("issuetype").path("name").asText("");
+                issueTypeMap.put(issueKey, actualIssueType);
+                
+                logger.info("[JiraProjectController] Issue {} has type: {}", issueKey, actualIssueType);
+                
+                if (!issueType.equalsIgnoreCase(actualIssueType)) {
+                    allSameType = false;
+                }
+            } catch (Exception e) {
+                logger.error("[JiraProjectController] Error fetching issue {}: {}", issueKey, e.getMessage());
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Error fetching issue " + issueKey + ": " + e.getMessage());
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+        }
+        
+        if (!allSameType) {
+            logger.warn("[JiraProjectController] Not all issues are of type: {}", issueType);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Not all issues are of type: " + issueType);
+            
+            // Add details about each issue's type
+            Map<String, String> issueDetails = new HashMap<>();
+            for (Map.Entry<String, String> entry : issueTypeMap.entrySet()) {
+                issueDetails.put(entry.getKey(), entry.getValue());
+            }
+            errorResponse.put("issueTypes", issueDetails);
+            
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+        Map<String, Object> filteredResponse = new HashMap<>();
+        
+        // Special handling for Epic issue type
+        if ("Epic".equalsIgnoreCase(issueType)) {
+            logger.info("[JiraProjectController] Processing Epic issue type for keys: {}", issueKeys);
+            
+            for (String epicKey : issueKeys) {
+                logger.info("[JiraProjectController] Processing Epic: {}", epicKey);
+                try {
+                    // First verify this is actually an Epic
+                    logger.debug("[JiraProjectController] Fetching Epic details from Jira: {}", epicKey);
+                    JsonNode epicIssue = jiraApiService.fetchIssueByKey(epicKey, 
+                            vertical.getJiraServerUrl(),
+                            vertical.getJiraUsername(),
+                            vertical.getApiKey());
+                    
+                    String actualIssueType = epicIssue.path("fields").path("issuetype").path("name").asText("");
+                    logger.info("[JiraProjectController] Actual issue type for {}: {}", epicKey, actualIssueType);
+                    
+                    if (!"Epic".equalsIgnoreCase(actualIssueType)) {
+                        logger.warn("[JiraProjectController] Issue {} is not an Epic, it is: {}", epicKey, actualIssueType);
+                        Map<String, Object> errorResponse = new HashMap<>();
+                        errorResponse.put("error", "Issue " + epicKey + " is not of type 'Epic', it is of type '" + actualIssueType + "'");
+                        filteredResponse.put(epicKey, errorResponse);
+                        continue;
+                    }
+                    
+                    // Get all child issues of this Epic
+                    logger.info("[JiraProjectController] Fetching child issues for Epic: {}", epicKey);
+                    List<String> childIssueKeys = jiraApiService.getEpicChildren(epicKey,
+                            vertical.getJiraServerUrl(),
+                            vertical.getJiraUsername(),
+                            vertical.getApiKey());
+                    
+                    if (childIssueKeys.isEmpty()) {
+                        logger.info("[JiraProjectController] No child issues found for Epic {}", epicKey);
+                        // Process the Epic itself if no children found
+                        logger.info("[JiraProjectController] Processing the Epic itself since no children were found");
+                        Map<String, Object> epicResponse = jiraApiService.searchIssuesByKeys(
+                                vertical.getJiraServerUrl(),
+                                vertical.getJiraUsername(),
+                                vertical.getApiKey(),
+                                Collections.singletonList(epicKey),
+                                issueType,
+                                templateName
+                        );
+                        
+                        if (epicResponse.containsKey(epicKey) && epicResponse.get(epicKey) instanceof Map) {
+                            Map<String, Object> epicData = (Map<String, Object>) epicResponse.get(epicKey);
+                            if (epicData.containsKey("aiResponse")) {
+                                logger.info("[JiraProjectController] Adding AI response for Epic: {}", epicKey);
+                                filteredResponse.put(epicKey, Collections.singletonMap("aiResponse", epicData.get("aiResponse")));
+                            } else {
+                                logger.warn("[JiraProjectController] No AI response found for Epic: {}", epicKey);
+                            }
+                        }
+                    } else {
+                        // Process all child issues
+                        logger.info("[JiraProjectController] Found {} child issues for Epic {}: {}", childIssueKeys.size(), epicKey, childIssueKeys);
+                        
+                        // Get child issue details and generate AI responses
+                        logger.info("[JiraProjectController] Generating AI responses for child issues of Epic: {}", epicKey);
+                        Map<String, Object> childrenResponses = jiraApiService.searchIssuesByKeys(
+                                vertical.getJiraServerUrl(),
+                                vertical.getJiraUsername(),
+                                vertical.getApiKey(),
+                                childIssueKeys,
+                                "Story", // Assume children are stories
+                                templateName
+                        );
+                        
+                        // Create a map to store all child responses for this Epic
+                        Map<String, Object> epicChildrenMap = new HashMap<>();
+                        
+                        // Process each child response
+                        for (String childKey : childrenResponses.keySet()) {
+                            logger.debug("[JiraProjectController] Processing child issue: {} for Epic: {}", childKey, epicKey);
+                            Object childData = childrenResponses.get(childKey);
+                            if (childData instanceof Map) {
+                                Map<String, Object> childMap = (Map<String, Object>) childData;
+                                if (childMap.containsKey("aiResponse")) {
+                                    logger.debug("[JiraProjectController] Adding AI response for child issue: {}", childKey);
+                                    epicChildrenMap.put(childKey, Collections.singletonMap("aiResponse", childMap.get("aiResponse")));
+                                } else if (childMap.containsKey("error")) {
+                                    logger.warn("[JiraProjectController] Error in child issue: {}: {}", childKey, childMap.get("error"));
+                                    epicChildrenMap.put(childKey, childMap);
+                                }
+                            }
+                        }
+                        
+                        // Add all children responses under the Epic key
+                        logger.info("[JiraProjectController] Adding responses for {} child issues under Epic: {}", epicChildrenMap.size(), epicKey);
+                        filteredResponse.put(epicKey, epicChildrenMap);
+                    }
+                } catch (Exception e) {
+                    logger.error("[JiraProjectController] Error processing Epic {}: {}", epicKey, e.getMessage(), e);
+                    filteredResponse.put(epicKey, Collections.singletonMap("error", e.getMessage()));
+                }
+            }
+        } else {
+            // Standard processing for non-Epic issue types
+            logger.info("[JiraProjectController] Processing standard issue type: {} for keys: {}", issueType, issueKeys);
+            Map<String, Object> fullResponse = jiraApiService.searchIssuesByKeys(
+                    vertical.getJiraServerUrl(),
+                    vertical.getJiraUsername(),
+                    vertical.getApiKey(),
+                    issueKeys,
+                    issueType,
+                    templateName
+            );
+            
+            for (String issueKey : fullResponse.keySet()) {
+                logger.debug("[JiraProjectController] Processing response for issue: {}", issueKey);
+                Object issueData = fullResponse.get(issueKey);
+                
+                if (issueData instanceof Map) {
+                    Map<String, Object> issueMap = (Map<String, Object>) issueData;
+                    
+                    // Check if the actual issue type matches the requested issue type
+                    if (issueMap.containsKey("issueType") && !issueType.equalsIgnoreCase(issueMap.get("issueType").toString())) {
+                        logger.warn("[JiraProjectController] Issue {} type mismatch. Requested: {}, Actual: {}", 
+                                issueKey, issueType, issueMap.get("issueType"));
+                        Map<String, Object> errorResponse = new HashMap<>();
+                        errorResponse.put("error", "Issue " + issueKey + " is not of type '" + issueType + 
+                                          "', it is of type '" + issueMap.get("issueType") + "'");
+                        filteredResponse.put(issueKey, errorResponse);
+                    } else if (issueMap.containsKey("aiResponse")) {
+                        logger.debug("[JiraProjectController] Adding AI response for issue: {}", issueKey);
+                        // Only include the aiResponse in the filtered response
+                        filteredResponse.put(issueKey, Collections.singletonMap("aiResponse", issueMap.get("aiResponse")));
+                    } else if (issueMap.containsKey("error")) {
+                        logger.warn("[JiraProjectController] Error in issue: {}: {}", issueKey, issueMap.get("error"));
+                        // Keep error messages
+                        filteredResponse.put(issueKey, issueMap);
+                    }
+                }
+            }
+        }
+        
+        logger.info("[JiraProjectController] Completed processing {} issues with type: {}", issueKeys.size(), issueType);
+        return ResponseEntity.ok(filteredResponse);
+    }
+    
+    /**
+     * Validates if the provided issue type is one of the allowed types
+     * @param issueType The issue type to validate
+     * @return true if valid, false otherwise
+     */
+    private boolean isValidIssueType(String issueType) {
+        if (issueType == null || issueType.trim().isEmpty()) {
+            return false;
+        }
+        
+        List<String> validIssueTypes = Arrays.asList("Epic", "Story", "Bug");
+        return validIssueTypes.stream()
+                .anyMatch(type -> type.equalsIgnoreCase(issueType.trim()));
     }
 
     @GetMapping("/issues/{verticalId}")

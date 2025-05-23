@@ -4,13 +4,15 @@ import java.util.List;
 
 public class TestCaseWithEventsDto {
     private String test_case_id;
+    private String tc_id;
     private String url;
     private String description;
     private String category;
     private List<EventDto> events;
 
-    public TestCaseWithEventsDto(String test_case_id, String url, String description, String category, List<EventDto> events) {
+    public TestCaseWithEventsDto(String test_case_id, String tc_id, String url, String description, String category, List<EventDto> events) {
         this.test_case_id = test_case_id;
+        this.tc_id = tc_id;
         this.url = url;
         this.description = description;
         this.category = category;
@@ -55,5 +57,13 @@ public class TestCaseWithEventsDto {
 
     public void setEvents(List<EventDto> events) {
         this.events = events;
+    }
+
+    public String getTcId() {
+        return tc_id;
+    }
+
+    public void setTcId(String tc_id) {
+        this.tc_id = tc_id;
     }
 }

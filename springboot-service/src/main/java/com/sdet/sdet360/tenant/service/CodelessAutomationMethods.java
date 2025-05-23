@@ -115,6 +115,7 @@ public class CodelessAutomationMethods {
         // Create and return the DTO with test case info and events
         return new TestCaseWithEventsDto(
                 testCase.getTestcaseId().toString(),
+                testCase.getTcId(),
                 testCase.getUrl(),
                 testCase.getDescription(),
                 testCase.getCategory().toLowerCase(),

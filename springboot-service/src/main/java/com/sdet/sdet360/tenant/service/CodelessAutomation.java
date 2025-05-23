@@ -186,6 +186,7 @@ public class CodelessAutomation {
                     // Create and return the DTO with test case info and events
                     return new TestCaseWithEventsDto(
                             testCase.getTestcaseId().toString(),
+                            testCase.getTcId(),
                             testCase.getUrl(),
                             testCase.getDescription(),
                             testCase.getCategory().toLowerCase(),
@@ -238,11 +239,11 @@ public class CodelessAutomation {
                 .findByTestcaseId(testCaseUuid)
                 .orElseGet(() -> {
                     InteractionTable newInteraction = new InteractionTable(
-                            feature, finalTestCaseUuid, description, category, url);
+                            feature, finalTestCaseUuid, testCaseId, description, category, url);
                     return interactionTableRepository.save(newInteraction);
                 });
 
-        // Update existing interaction if found
+        // zUpdate existing interaction if found
         interaction.setDescription(description);
         interaction.setCategory(category);
         interaction.setUrl(url);
@@ -470,6 +471,7 @@ public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
     // Create and return the DTO with test case info and events
     return new TestCaseWithEventsDto(
             testCase.getTestcaseId().toString(),
+            testCase.getTcId(),
             testCase.getUrl(),
             testCase.getDescription(),
             testCase.getCategory().toLowerCase(),
