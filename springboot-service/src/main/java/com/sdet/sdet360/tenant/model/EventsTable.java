@@ -36,10 +36,11 @@ public class EventsTable extends BaseEntity {
     private String Value;
     @Column(name = "assertion")
     private Boolean Assertion;
+    @Column(name = "assertion_status")
+    private Boolean assertionStatus;
+    @Column(name = "auto_healed")
+    private Boolean autoHealed;
     @Column(name = "is_modified")
     private Boolean isModified;
-
-
-
-
 }
+

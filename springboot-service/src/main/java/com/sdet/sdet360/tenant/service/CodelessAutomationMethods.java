@@ -128,6 +128,7 @@ public class CodelessAutomationMethods {
      * @param testCaseIds List of test case IDs to run
      * @return Results of the test execution
      */
+    @Transactional
     public List<TestExecutionResultDto> runMultipleTestCases(List<String> testCaseIds, SeleniumTestExecutor seleniumTestExecutor) {
         logger.info("Service: Running multiple test cases: {}", testCaseIds);
         
@@ -164,6 +165,44 @@ public class CodelessAutomationMethods {
                         testCase.getUrl(),
                         events
                 );
+                
+                // Update assertion status and save auto-healed events for successful test execution
+                if ("SUCCESS".equals(result.getStatus())) {
+                    logger.info("Test case {} executed successfully, updating assertion status and auto-healed events", testCaseId);
+                    
+                    // Get the event IDs from the result
+                    List<String> eventIds = result.getEventIds();
+                    if (eventIds != null && !eventIds.isEmpty()) {
+                        for (EventsTable event : events) {
+                            boolean needsUpdate = false;
+                            
+                            // Check if this event has assertion enabled
+                            if (event.getAssertion() != null && event.getAssertion()) {
+                                // Update assertion status to true for successful execution
+                                event.setAssertionStatus(true);
+                                needsUpdate = true;
+                            }
+                            
+                            // Check if this event was auto-healed (updated in SeleniumTestExecutor)
+                            if (event.getAutoHealed() != null && event.getAutoHealed()) {
+                                logger.info("Auto-healed event detected for ID: {}, saving updated XPath: {}", 
+                                        event.getId(), event.getRelativeXpath());
+                                needsUpdate = true;
+                            }
+                            
+                            // Save the event if it needs updating
+                            if (needsUpdate) {
+                                eventsTableRepository.save(event);
+                                logger.info("Updated event ID: {}", event.getId());
+                            }
+                        }
+                    }
+                    
+                    // Log if auto-healing was used
+                    if (result.isAutoHealed()) {
+                        logger.info("Test case {} used auto-healing during execution", testCaseId);
+                    }
+                }
                 
                 results.add(result);
                 

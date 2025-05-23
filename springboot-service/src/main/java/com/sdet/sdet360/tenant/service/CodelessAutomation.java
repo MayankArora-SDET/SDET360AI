@@ -33,8 +33,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.UUID;
 
 @Service
 public class CodelessAutomation {
@@ -257,31 +257,37 @@ public class CodelessAutomation {
 
     /**
      * Save events for an interaction
-     *
-     * @param events List of events to save
-     * @param interaction The interaction to associate with events
-     * @param enableAssertion Whether assertions should be enabled
+     * @param events List of event DTOs to save
+     * @param interaction The interaction table record to associate events with
+     * @param enableAssertion Whether to enable assertions for these events
      */
     private void saveEvents(List<EventDto> events, InteractionTable interaction, boolean enableAssertion) {
-        for (EventDto event : events) {
-            EventsTable eventEntity = new EventsTable();
-            eventEntity.setInteraction(interaction);
-            eventEntity.setAbsolutePath(event.getAbsoluteXPath());
-            eventEntity.setRelativeXpath(event.getRelativeXPath());
-            eventEntity.setRelationalXpath(event.getRelationalXPath());
-            eventEntity.setAction(event.getAction());
-            eventEntity.setType(event.getType());
-            eventEntity.setValue(event.getValue());
-            eventEntity.setAssertion(enableAssertion);
-            eventEntity.setIsModified(false);
-
-            eventsTableRepository.save(eventEntity);
-        }
+        logger.info("Saving {} events for test case ID: {}", events.size(), interaction.getTestcaseId());
+        
+        // Convert and save each event
+        List<EventsTable> eventEntities = events.stream().map(eventDto -> {
+            EventsTable event = new EventsTable();
+            event.setInteraction(interaction);
+            event.setAbsolutePath(eventDto.getAbsoluteXPath());
+            event.setRelativeXpath(eventDto.getRelativeXPath());
+            event.setRelationalXpath(eventDto.getRelationalXPath());
+            event.setAction(eventDto.getAction());
+            event.setType(eventDto.getType());
+            event.setValue(eventDto.getValue());
+            event.setAssertion(enableAssertion && eventDto.getAssertion() != null ? eventDto.getAssertion() : false);
+            event.setAssertionStatus(eventDto.getAssertionStatus());
+            event.setAutoHealed(eventDto.getAutohealed());
+            event.setIsModified(false); // Default value for new events
+            return event;
+        }).collect(Collectors.toList());
+        
+        // Save all events in a batch
+        eventsTableRepository.saveAll(eventEntities);
+        logger.info("Successfully saved {} events", eventEntities.size());
     }
-
+    
     /**
-     * Extracts the vertical information from the JWT token in request
-     *
+     * Save events for an interaction
      * @param authentication Current authentication object (used as fallback)
      * @return Vertical value extracted from JWT token
      */
@@ -442,6 +448,9 @@ public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
     } catch (IllegalArgumentException e) {
         throw new IllegalArgumentException("Invalid test case ID format");
     }
+    
+    // Use AtomicBoolean to track if any events were auto-healed (can be modified in lambda)
+    final AtomicBoolean hasAutoHealedEvents = new AtomicBoolean(false);
 
     // Find the test case
     InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
@@ -451,7 +460,7 @@ public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
     List<EventsTable> events = eventsTableRepository.findByTestcaseId(testCaseUuid);
     logger.info("Found {} events for test case ID: {}", events.size(), testCaseId);
 
-    // Convert EventsTable entities to EventDto objects
+    // Convert EventsTable entities to EventDto objects and check for auto-healed events
     List<EventDto> eventDtos = events.stream()
             .map(event -> {
                 EventDto dto = new EventDto();
@@ -463,18 +472,27 @@ public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
                 dto.setType(event.getType());
                 dto.setValue(event.getValue());
                 dto.setAssertion(event.getAssertion());
-                dto.setAutohealed(event.getIsModified());
+                dto.setAssertionStatus(event.getAssertionStatus());
+                
+                // Check if this event was auto-healed
+                Boolean isAutoHealed = event.getAutoHealed();
+                if (isAutoHealed != null && isAutoHealed) {
+                    hasAutoHealedEvents.set(true);
+                }
+                
+                dto.setAutohealed(isAutoHealed);
                 return dto;
             })
             .collect(Collectors.toList());
 
-    // Create and return the DTO with test case info and events
+    // Create and return the DTO with test case info, events, and autoHealed flag
     return new TestCaseWithEventsDto(
             testCase.getTestcaseId().toString(),
             testCase.getTcId(),
             testCase.getUrl(),
             testCase.getDescription(),
             testCase.getCategory().toLowerCase(),
+            hasAutoHealedEvents.get(), // Include the autoHealed flag
             eventDtos);
 }
 
@@ -522,7 +540,7 @@ public String updateEvents(String testCaseId, List<EventDto> events) {
     eventsTableRepository.deleteByTestcaseId(testCaseUuid);
     
     // Save the updated events
-    saveEvents(events, testCase, false);
+    saveEvents(events, testCase, true);
     
     // Update the last modified timestamp
     testCase.setUpdatedAt(LocalDateTime.now());

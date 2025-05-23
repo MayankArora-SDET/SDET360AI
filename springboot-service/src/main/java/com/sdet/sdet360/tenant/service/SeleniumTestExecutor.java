@@ -123,6 +123,13 @@ public class SeleniumTestExecutor {
                         String healedXpath = (String) elementResult.get("healedXpath");
                         executedEvent.put("healedXPath", healedXpath);
                         logger.info("Auto-healed XPath from '{}' to '{}'", xpath, healedXpath);
+                        
+                        // Update the class-level autoHealed flag
+                        autoHealed = true;
+                        
+                        // Update the event's XPath with the healed XPath
+                        event.setRelativeXpath(healedXpath);
+                        event.setAutoHealed(true);
                     }
                     
                     // Execute action based on type
@@ -161,6 +168,13 @@ public class SeleniumTestExecutor {
                             executedEvent.put("autoHealed", true);
                             executedEvent.put("healedXPath", healedXpath);
                             logger.info("Auto-healed XPath from '{}' to '{}'", event.getRelativeXpath(), healedXpath);
+                            
+                            // Update the class-level autoHealed flag
+                            autoHealed = true;
+                            
+                            // Update the event's XPath with the healed XPath
+                            event.setRelativeXpath(healedXpath);
+                            event.setAutoHealed(true);
                             
                             if ("click".equalsIgnoreCase(event.getAction())) {
                                 healedElement.click();

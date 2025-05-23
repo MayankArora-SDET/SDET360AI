@@ -10,6 +10,7 @@ public class EventDto {
     private String action;
     private String type;
     private Boolean Assertion;
+    private Boolean assertionStatus;
     private Boolean Autohealed;
     private String value;
 
@@ -83,5 +84,13 @@ public class EventDto {
 
     public void setEventId(UUID eventId) {
         this.eventId = eventId;
+    }
+    
+    public Boolean getAssertionStatus() {
+        return assertionStatus;
+    }
+
+    public void setAssertionStatus(Boolean assertionStatus) {
+        this.assertionStatus = assertionStatus;
     }
 }

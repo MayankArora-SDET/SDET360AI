@@ -8,15 +8,21 @@ public class TestCaseWithEventsDto {
     private String url;
     private String description;
     private String category;
+    private boolean autoHealed;
     private List<EventDto> events;
 
-    public TestCaseWithEventsDto(String test_case_id, String tc_id, String url, String description, String category, List<EventDto> events) {
+    public TestCaseWithEventsDto(String test_case_id, String tc_id, String url, String description, String category, boolean autoHealed, List<EventDto> events) {
         this.test_case_id = test_case_id;
         this.tc_id = tc_id;
         this.url = url;
         this.description = description;
         this.category = category;
+        this.autoHealed = autoHealed;
         this.events = events;
+    }
+
+    public TestCaseWithEventsDto(String test_case_id, String tc_id, String url, String description, String category, List<EventDto> events) {
+        this(test_case_id, tc_id, url, description, category, false, events);
     }
 
     public String getTest_case_id() {
@@ -65,5 +71,13 @@ public class TestCaseWithEventsDto {
 
     public void setTcId(String tc_id) {
         this.tc_id = tc_id;
+    }
+    
+    public boolean isAutoHealed() {
+        return autoHealed;
+    }
+    
+    public void setAutoHealed(boolean autoHealed) {
+        this.autoHealed = autoHealed;
     }
 }

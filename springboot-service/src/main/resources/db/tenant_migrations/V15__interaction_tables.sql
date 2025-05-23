@@ -21,6 +21,8 @@ CREATE TABLE event_tables (
     type VARCHAR,
     value VARCHAR,
     assertion BOOLEAN,
+    assertion_status BOOLEAN,
+    auto_healed BOOLEAN,
     is_modified BOOLEAN,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
