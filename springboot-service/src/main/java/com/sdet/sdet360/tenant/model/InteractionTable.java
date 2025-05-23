@@ -23,6 +23,9 @@ public class InteractionTable extends BaseEntity {
     
     @Column(name = "testcase_id")
     private UUID testcaseId;
+
+    @Column(name = "tc_id")
+    private String tcId;
     
     @Column(name = "description", columnDefinition = "text")
     private String description;

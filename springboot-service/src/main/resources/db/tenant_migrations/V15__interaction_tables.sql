@@ -2,6 +2,7 @@ CREATE TABLE interaction_tables (
     interaction_id UUID PRIMARY KEY,
     feature_id UUID REFERENCES features(feature_id),
     testcase_id UUID,
+    tc_id VARCHAR,
     description TEXT,
     category VARCHAR,
     url VARCHAR,
