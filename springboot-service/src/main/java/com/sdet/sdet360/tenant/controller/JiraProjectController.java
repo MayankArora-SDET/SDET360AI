@@ -179,8 +179,17 @@ public class JiraProjectController {
             @RequestParam(required = false) String templateName) {
         logger.info("[JiraProjectController] Received request to search issues by keys: {} with issueType: {}", issueKeys, issueType);
         
-        // Validate issue type
-        if (!isValidIssueType(issueType)) {
+        // Validate issue type based on templateName
+        if (templateName != null && templateName.equals("LOG_A_BUG_FOR_TEST_CASE")) {
+            // Only allow TestCase issue type for LOG_A_BUG_FOR_TEST_CASE template
+            if (!"Test Cases".equalsIgnoreCase(issueType)) {
+                logger.warn("[JiraProjectController] Invalid issue type for LOG_A_BUG_FOR_TEST_CASE feature");
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid issue type. Only 'test cases ' is allowed for LOG_A_BUG_FOR_TEST_CASE template");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+        } else if (!isValidIssueType(issueType)) {
+            // For all other cases, use the standard validation
             logger.warn("[JiraProjectController] Invalid issue type: {}", issueType);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid issue type. Must be one of: Epic, Story, Bug");
