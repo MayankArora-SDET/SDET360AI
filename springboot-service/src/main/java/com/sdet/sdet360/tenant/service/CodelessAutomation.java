@@ -263,13 +263,13 @@ public class CodelessAutomation {
      */
     private void saveEvents(List<EventDto> events, InteractionTable interaction, boolean enableAssertion) {
         logger.info("Saving {} events for test case ID: {}", events.size(), interaction.getTestcaseId());
-        
-        // Convert and save each event
+         
         List<EventsTable> eventEntities = events.stream().map(eventDto -> {
             EventsTable event = new EventsTable();
             event.setInteraction(interaction);
             event.setAbsolutePath(eventDto.getAbsoluteXPath());
             event.setRelativeXpath(eventDto.getRelativeXPath());
+            logger.info("Relational x path : {}", eventDto.getRelationalXPath());
             event.setRelationalXpath(eventDto.getRelationalXPath());
             event.setAction(eventDto.getAction());
             event.setType(eventDto.getType());
@@ -277,116 +277,14 @@ public class CodelessAutomation {
             event.setAssertion(enableAssertion && eventDto.getAssertion() != null ? eventDto.getAssertion() : false);
             event.setAssertionStatus(eventDto.getAssertionStatus());
             event.setAutoHealed(eventDto.getAutohealed());
-            event.setIsModified(false); // Default value for new events
+            event.setIsModified(false);  
             return event;
         }).collect(Collectors.toList());
-        
-        // Save all events in a batch
+         
         eventsTableRepository.saveAll(eventEntities);
         logger.info("Successfully saved {} events", eventEntities.size());
     }
     
-    /**
-     * Save events for an interaction
-     * @param authentication Current authentication object (used as fallback)
-     * @return Vertical value extracted from JWT token
-     */
-    private String extractVerticalFromAuthentication(Authentication authentication) {
-        try {
-            // Get current request from RequestContextHolder
-            HttpServletRequest request =
-                    ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-
-            if (request != null) {
-                // Get JWT token from cookies or Authorization header
-                String token = extractJwtFromRequest(request);
-
-                if (token != null && !token.isEmpty()) {
-                    // Decode JWT token without validation (just to extract claims)
-                    // This avoids dependency on specific JWT implementation
-                    Map<String, Object> claims = extractClaims(token);
-
-                    // Extract tenantId from claims
-                    if (claims.containsKey("tenantId")) {
-                        String tenantId = claims.get("tenantId").toString();
-                        logger.debug("Extracted tenant ID from JWT token: {}", tenantId);
-                        return tenantId;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to extract tenant ID from JWT token: {}", e.getMessage());
-        }
-
-        // Fallback: Use authentication object if available
-        if (authentication != null) {
-            String username = authentication.getName();
-            logger.debug("Using username as vertical: {}", username);
-            return username;
-        }
-
-        logger.warn("Could not extract tenant ID, using default vertical");
-        return "default_vertical";
-    }
-
-    /**
-     * Extract JWT token from request (cookie or header)
-     *
-     * @param request HTTP request
-     * @return JWT token or null if not found
-     */
-    private String extractJwtFromRequest(HttpServletRequest request) {
-        // First check in cookies
-        final String JWT_COOKIE_NAME = "jwt";
-        Cookie[] cookies = request.getCookies();
-
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (JWT_COOKIE_NAME.equals(cookie.getName())) {
-                    String tokenValue = cookie.getValue();
-                    if (tokenValue != null && !tokenValue.isEmpty()) {
-                        return tokenValue;
-                    }
-                }
-            }
-        }
-
-        // If not in cookies, fall back to Authorization header
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-
-        return null;
-    }
-
-    /**
-     * Extract claims from JWT token without validation
-     * This is useful for getting information from token without checking signature
-     *
-     * @param token JWT token string
-     * @return Map of claims or empty map if parsing fails
-     */
-    private Map<String, Object> extractClaims(String token) {
-        try {
-            // Split the token
-            String[] parts = token.split("\\.");
-            if (parts.length != 3) {
-                return Collections.emptyMap();
-            }
-
-            // Decode the payload (second part)
-            String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-
-            // Parse JSON
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(payload, new TypeReference<Map<String, Object>>() {});
-        } catch (Exception e) {
-            logger.error("Failed to decode JWT token", e);
-            return Collections.emptyMap();
-        }
-    }
-
 /**
  * Converts Date to LocalDateTime
  */
@@ -532,17 +430,13 @@ public String updateEvents(String testCaseId, List<EventDto> events) {
         throw new IllegalArgumentException("Invalid test case ID format");
     }
     
-    // Find the test case
     InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
             .orElseThrow(() -> new IllegalArgumentException("Test case not found: " + testCaseId));
-    
-    // Delete existing events for this test case
+     
     eventsTableRepository.deleteByTestcaseId(testCaseUuid);
-    
-    // Save the updated events
+     
     saveEvents(events, testCase, true);
-    
-    // Update the last modified timestamp
+     
     testCase.setUpdatedAt(LocalDateTime.now());
     interactionTableRepository.save(testCase);
     
