@@ -9,5 +9,5 @@ CREATE TABLE IF NOT EXISTS release_test_coverage (
     vertical_id UUID NOT NULL,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
-    deleted_at TIMESTAMP,
+    deleted_at TIMESTAMP
 );

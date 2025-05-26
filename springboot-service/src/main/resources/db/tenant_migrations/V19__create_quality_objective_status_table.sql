@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS quality_objective_status (
     vertical_id UUID NOT NULL,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
-    deleted_at TIMESTAMP,
+    deleted_at TIMESTAMP
 );

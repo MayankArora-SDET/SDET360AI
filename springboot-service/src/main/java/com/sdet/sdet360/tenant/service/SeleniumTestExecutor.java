@@ -3,24 +3,29 @@ package com.sdet.sdet360.tenant.service;
 import com.sdet.sdet360.tenant.dto.TestExecutionResultDto;
 import com.sdet.sdet360.tenant.model.EventsTable;
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import ru.yandex.qatools.ashot.AShot;
+import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
+import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
+import javax.imageio.ImageIO;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -146,8 +151,7 @@ public class SeleniumTestExecutor {
                         executedEvent.put("executed", false);
                         executedEvent.put("error", "Unknown action or missing value");
                     }
-                    
-                    // Take screenshot after action
+                     
                     String screenshotPath = takeScreenshot(driver, screenshotsDir, "event_" + eventIndex);
                     screenshots.add(screenshotPath);
                     
@@ -233,7 +237,8 @@ public class SeleniumTestExecutor {
     }
     
     /**
-     * Takes a screenshot and saves it to the specified directory
+     * Takes a complete DOM screenshot and saves it to the specified directory
+     * Uses AShot library which can capture the entire DOM regardless of viewport size
      *
      * @param driver The WebDriver instance
      * @param screenshotsDir The directory to save screenshots to
@@ -241,39 +246,34 @@ public class SeleniumTestExecutor {
      * @return The path to the screenshot
      */
     private String takeScreenshot(WebDriver driver, Path screenshotsDir, String name) throws Exception {
-        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+         
         String filename = name + "_" + UUID.randomUUID() + ".png";
         Path destination = screenshotsDir.resolve(filename);
-        Files.copy(screenshot.toPath(), destination);
-        return destination.toString();
+        File outputFile = destination.toFile();
+        
+        try { 
+            Dimension originalSize = driver.manage().window().getSize();
+            try { 
+                driver.manage().window().setSize(new Dimension(1920, 1080));
+                 
+                ru.yandex.qatools.ashot.Screenshot screenshot = new AShot()
+                    .shootingStrategy(ShootingStrategies.viewportPasting(1000)) // Only pass scrollTimeout
+                    .coordsProvider(new WebDriverCoordsProvider())
+                    .takeScreenshot(driver);
+                 
+                ImageIO.write(screenshot.getImage(), "PNG", outputFile);
+                return destination.toString();
+            } finally { 
+                driver.manage().window().setSize(originalSize);
+            }
+        } catch (Exception e) {
+            logger.error("Error taking full DOM screenshot: {}", e.getMessage());
+             
+            File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            Files.copy(screenshotFile.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            
+            return destination.toString();
+        }
     }
     
-    /**
-     * Relaxes an XPath to make it more flexible for self-healing
-     *
-     * @param xpath The original XPath
-     * @return A more flexible XPath
-     */
-    private String relaxXPath(String xpath) {
-        // This is a simplified example of XPath relaxation
-        // In a real implementation, you would use more sophisticated techniques
-        
-        // Remove position predicates
-        String relaxed = xpath.replaceAll("\\[\\d+\\]", "");
-        
-        // Make contains() for text and attributes
-        if (relaxed.contains("@id='")) {
-            relaxed = relaxed.replaceAll("@id='([^']*)'", "contains(@id,'$1')");
-        }
-        
-        if (relaxed.contains("@class='")) {
-            relaxed = relaxed.replaceAll("@class='([^']*)'", "contains(@class,'$1')");
-        }
-        
-        if (relaxed.contains("text()='")) {
-            relaxed = relaxed.replaceAll("text\\(\\)='([^']*)'", "contains(text(),'$1')");
-        }
-        
-        return relaxed;
-    }
 }

@@ -4,6 +4,6 @@ CREATE TABLE IF NOT EXISTS test_case_with_text (
     created_at TIMESTAMP,
     updated_at TIMESTAMP, 
     user_text VARCHAR,
-    ai_response VARCHAR,
+    ai_response VARCHAR
 );
 
