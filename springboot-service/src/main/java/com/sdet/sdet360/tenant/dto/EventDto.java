@@ -1,5 +1,6 @@
 package com.sdet.sdet360.tenant.dto;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class EventDto {
@@ -13,6 +14,15 @@ public class EventDto {
     private Boolean assertionStatus;
     private Boolean Autohealed;
     private String value;
+    private LocalDateTime createdAt;
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 
     public String getRelativeXPath() {
         return relativeXPath;

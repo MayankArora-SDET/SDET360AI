@@ -94,9 +94,19 @@ public class SeleniumTestExecutor {
             String initialScreenshot = takeScreenshot(driver, screenshotsDir, "initial");
             screenshots.add(initialScreenshot);
             
-            // Execute each event
+            // First, create a map of event IDs for quick lookup during execution
+            Map<UUID, Integer> eventIndexMap = new HashMap<>();
+            for (int i = 0; i < events.size(); i++) {
+                eventIndexMap.put(events.get(i).getId(), i);
+            }
+            
+            // Execute each event in the exact order they were retrieved from the database
+            // The events are already ordered by createdAt ASC from the repository query
             int eventIndex = 0;
             for (EventsTable event : events) {
+                // Log event execution order for debugging
+                logger.info("Executing event #{} with ID: {}, Action: {}, XPath: {}, CreatedAt: {}", 
+                        eventIndex, event.getId(), event.getAction(), event.getRelativeXpath(), event.getCreatedAt());
                 // Add event ID to the list
                 eventIds.add(event.getId().toString());
                 Map<String, Object> executedEvent = new HashMap<>();

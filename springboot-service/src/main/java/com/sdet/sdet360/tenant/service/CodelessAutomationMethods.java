@@ -143,8 +143,16 @@ public class CodelessAutomationMethods {
                 InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
                         .orElseThrow(() -> new IllegalArgumentException("Test case not found: " + testCaseId));
                 
-                // Fetch events for this test case
+                // Fetch events for this test case in the exact order they were created (ordered by createdDate ASC)
                 List<EventsTable> events = eventsTableRepository.findByTestcaseId(testCaseUuid);
+                
+                // Log the event sequence for debugging
+                logger.info("Test case {} has {} events in the following sequence:", testCaseId, events.size());
+                for (int i = 0; i < events.size(); i++) {
+                    EventsTable event = events.get(i);
+                    logger.info("  Event #{}: ID={}, Action={}, XPath={}, CreatedAt={} ", 
+                            i, event.getId(), event.getAction(), event.getRelativeXpath(), event.getCreatedAt());
+                }
                 
                 if (events.isEmpty()) { 
                     List<String> emptyEventIds = new ArrayList<>();
@@ -158,6 +166,13 @@ public class CodelessAutomationMethods {
                     results.add(emptyResult);
                     continue;
                 }
+                
+                // Store original event sequence for comparison after execution
+                List<UUID> originalEventSequence = events.stream()
+                        .map(EventsTable::getId)
+                        .collect(Collectors.toList());
+                        
+                logger.info("Original event sequence order: {}", originalEventSequence);
                 
                 // Execute the test case using Selenium WebDriver
                 TestExecutionResultDto result = seleniumTestExecutor.executeTestCase(
@@ -173,6 +188,20 @@ public class CodelessAutomationMethods {
                     // Get the event IDs from the result
                     List<String> eventIds = result.getEventIds();
                     if (eventIds != null && !eventIds.isEmpty()) {
+                        // First log the event status after execution
+                        logger.info("Events after execution: ");
+                        for (int i = 0; i < events.size(); i++) {
+                            EventsTable event = events.get(i);
+                            logger.info("  Event #{}: ID={}, Action={}, XPath={}, AutoHealed={}", 
+                                    i, event.getId(), event.getAction(), event.getRelativeXpath(), event.getAutoHealed());
+                        }
+                        
+                        // Update events while preserving order
+                        Map<UUID, EventsTable> eventMap = new HashMap<>();
+                        for (EventsTable event : events) {
+                            eventMap.put(event.getId(), event);
+                        }
+                        
                         for (EventsTable event : events) {
                             boolean needsUpdate = false;
                             
@@ -185,15 +214,30 @@ public class CodelessAutomationMethods {
                             
                             // Check if this event was auto-healed (updated in SeleniumTestExecutor)
                             if (event.getAutoHealed() != null && event.getAutoHealed()) {
-                                logger.info("Auto-healed event detected for ID: {}, saving updated XPath: {}", 
+                                logger.info("Auto-healed event detected for ID: {}, new XPath: {}", 
                                         event.getId(), event.getRelativeXpath());
                                 needsUpdate = true;
-                            }
-                            
-                            // Save the event if it needs updating
+                            } 
                             if (needsUpdate) {
-                                eventsTableRepository.save(event);
-                                logger.info("Updated event ID: {}", event.getId());
+                                // Keep the original sequence/order value when saving
+                                // This ensures event order is preserved
+                                EventsTable existingEvent = eventsTableRepository.findById(event.getId())
+                                        .orElse(event);
+                                
+                                // Only update the fields that were changed during auto-healing
+                                // but preserve the sequence
+                                if (event.getRelativeXpath() != null) {
+                                    existingEvent.setRelativeXpath(event.getRelativeXpath());
+                                }
+                                if (event.getAutoHealed() != null) {
+                                    existingEvent.setAutoHealed(event.getAutoHealed());
+                                }
+                                if (event.getAssertionStatus() != null) {
+                                    existingEvent.setAssertionStatus(event.getAssertionStatus());
+                                }
+                                
+                                eventsTableRepository.save(existingEvent);
+                                logger.info("Updated event ID: {} while preserving sequence", existingEvent.getId());
                             }
                         }
                     }

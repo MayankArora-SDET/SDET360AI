@@ -371,6 +371,7 @@ public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
                 dto.setValue(event.getValue());
                 dto.setAssertion(event.getAssertion());
                 dto.setAssertionStatus(event.getAssertionStatus());
+                dto.setCreatedAt(event.getCreatedAt());
                 
                 // Check if this event was auto-healed
                 Boolean isAutoHealed = event.getAutoHealed();
