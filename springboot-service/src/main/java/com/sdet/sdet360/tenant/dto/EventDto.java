@@ -14,7 +14,16 @@ public class EventDto {
     private Boolean assertionStatus;
     private Boolean Autohealed;
     private String value;
+    private int sequenceNumber;
     private LocalDateTime createdAt;
+    
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    public void setSequenceNumber(int sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
+    }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

@@ -13,7 +13,7 @@ import java.util.UUID;
 public interface EventsTableRepository extends JpaRepository<EventsTable, UUID> {
     List<EventsTable> findByInteraction(InteractionTable interaction);
     
-    @Query("SELECT e FROM EventsTable e WHERE e.interaction.testcaseId = :testcaseId ORDER BY e.createdAt ASC")
+    @Query("SELECT e FROM EventsTable e WHERE e.interaction.testcaseId = :testcaseId ORDER BY e.sequenceNumber ASC")
     List<EventsTable> findByTestcaseId(UUID testcaseId);
     
     @Query("DELETE FROM EventsTable e WHERE e.interaction.testcaseId = :testcaseId")

@@ -42,5 +42,9 @@ public class EventsTable extends BaseEntity {
     private Boolean autoHealed;
     @Column(name = "is_modified")
     private Boolean isModified;
+    
+    // Add sequence number to maintain the original order of events
+    @Column(name = "sequence_number")
+    private Integer sequenceNumber;
 }
 

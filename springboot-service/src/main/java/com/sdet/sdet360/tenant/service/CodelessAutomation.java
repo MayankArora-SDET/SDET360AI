@@ -109,15 +109,13 @@ public class CodelessAutomation {
      * @throws TokenValidationException if token is invalid or expired
      */
     public TokenDataDto validateToken(String token) throws TokenValidationException {
-        try {
-            // Parse and validate token
+        try { 
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-
-            // Extract token data
+ 
             return TokenDataDto.builder()
                     .username((String) claims.get("username"))
                     .url((String) claims.get("url"))
@@ -148,11 +146,9 @@ public class CodelessAutomation {
     public List<TestCaseWithEventsDto> getRecordedTestCases(String category) {
         logger.info("Service: Retrieving test cases with category filter: {}", category);
 
-        // Convert category to lowercase for case-insensitive comparison
-        String categoryFilter = (category == null || category.isEmpty()) ?
+         String categoryFilter = (category == null || category.isEmpty()) ?
                 TestCaseCategory.ALL.name().toUpperCase() : category.toUpperCase();
-
-        // Build query based on category
+ 
         List<InteractionTable> testCases;
         if (categoryFilter.equals(TestCaseCategory.ALL.name().toUpperCase())) {
             testCases = interactionTableRepository.findAllActive();
@@ -161,15 +157,12 @@ public class CodelessAutomation {
         }
         
         logger.info("Found {} test cases matching category: {}", testCases.size(), categoryFilter);
-        
-        // Map to DTOs with events
+         
         return testCases.stream()
-                .map(testCase -> {
-                    // Fetch events for this test case
+                .map(testCase -> { 
                     List<EventsTable> events = eventsTableRepository.findByTestcaseId(testCase.getTestcaseId());
                     logger.info("Found {} events for test case ID: {}", events.size(), testCase.getTestcaseId());
                     
-                    // Convert EventsTable entities to EventDto objects
                     List<EventDto> eventDtos = events.stream()
                             .map(event -> {
                                 EventDto dto = new EventDto();
@@ -183,8 +176,7 @@ public class CodelessAutomation {
                             })
                             .collect(Collectors.toList());
                     
-                    // Create and return the DTO with test case info and events
-                    return new TestCaseWithEventsDto(
+                     return new TestCaseWithEventsDto(
                             testCase.getTestcaseId().toString(),
                             testCase.getTcId(),
                             testCase.getUrl(),
@@ -206,32 +198,29 @@ public class CodelessAutomation {
      */
     @Transactional
     public String recordInteractionsLog(UUID verticalId, TokenDataDto tokenData, List<EventDto> events, boolean enableAssertion) {
-        // Extract data from token
+         
         String vertical = verticalId.toString();
         String testCaseId = tokenData.getTestCaseId();
         String description = tokenData.getDescription();
         String url = tokenData.getUrl();
         String category = tokenData.getCategory().toLowerCase();
-
-        // Validate required fields
+ 
         if (vertical == null || url == null || testCaseId == null || description == null) {
             throw new IllegalArgumentException("Vertical, Test case Id, Description and URL must be provided in the request.");
         }
-
-        // Get or create feature based on vertical
+ 
         Feature feature = featureRepository.findByFeatureName(vertical)
                 .orElseGet(() -> {
                     Feature newFeature = new Feature();
                     newFeature.setFeatureName(vertical);
                     return featureRepository.save(newFeature);
                 });
-
-        // Find existing interaction or create new one
+ 
         UUID testCaseUuid;
         try {
             testCaseUuid = UUID.fromString(testCaseId);
         } catch (IllegalArgumentException e) {
-            testCaseUuid = UUID.randomUUID(); // Generate new UUID if invalid format
+            testCaseUuid = UUID.randomUUID();  
         }
 
         UUID finalTestCaseUuid = testCaseUuid;
@@ -242,14 +231,12 @@ public class CodelessAutomation {
                             feature, finalTestCaseUuid, testCaseId, description, category, url);
                     return interactionTableRepository.save(newInteraction);
                 });
-
-        // zUpdate existing interaction if found
+ 
         interaction.setDescription(description);
         interaction.setCategory(category);
         interaction.setUrl(url);
         interactionTableRepository.save(interaction);
-
-        // Process events
+ 
         saveEvents(events, interaction, enableAssertion);
 
         return String.format("Test case '%s' saved/updated successfully.", testCaseId);
@@ -264,7 +251,10 @@ public class CodelessAutomation {
     private void saveEvents(List<EventDto> events, InteractionTable interaction, boolean enableAssertion) {
         logger.info("Saving {} events for test case ID: {}", events.size(), interaction.getTestcaseId());
          
-        List<EventsTable> eventEntities = events.stream().map(eventDto -> {
+        // Create event entities with sequence numbers to maintain order
+        List<EventsTable> eventEntities = new ArrayList<>();
+        for (int i = 0; i < events.size(); i++) {
+            EventDto eventDto = events.get(i);
             EventsTable event = new EventsTable();
             event.setInteraction(interaction);
             event.setAbsolutePath(eventDto.getAbsoluteXPath());
@@ -277,12 +267,14 @@ public class CodelessAutomation {
             event.setAssertion(enableAssertion && eventDto.getAssertion() != null ? eventDto.getAssertion() : false);
             event.setAssertionStatus(eventDto.getAssertionStatus());
             event.setAutoHealed(eventDto.getAutohealed());
-            event.setIsModified(false);  
-            return event;
-        }).collect(Collectors.toList());
+            event.setIsModified(false);
+            // Set sequence number to maintain the original order
+            event.setSequenceNumber(i);
+            eventEntities.add(event);
+        }
          
         eventsTableRepository.saveAll(eventEntities);
-        logger.info("Successfully saved {} events", eventEntities.size());
+        logger.info("Successfully saved {} events with sequence numbers", eventEntities.size());
     }
     
 /**
@@ -304,23 +296,20 @@ private LocalDateTime toLocalDateTime(Date date) {
 @Transactional
 public String updateTestCaseCategory(String testCaseId, String newCategory) {
     logger.info("Service: Updating category for test case ID: {} to {}", testCaseId, newCategory);
-
-    // Validate category
+ 
     try {
         TestCaseCategory.valueOf(newCategory.toUpperCase());
     } catch (IllegalArgumentException e) {
         throw new IllegalArgumentException("Invalid category: " + newCategory);
     }
-
-    // Find the test case
+ 
     UUID testCaseUuid;
     try {
         testCaseUuid = UUID.fromString(testCaseId);
     } catch (IllegalArgumentException e) {
         throw new IllegalArgumentException("Invalid test case ID format");
     }
-
-    // Update the category
+ 
     InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
             .orElseThrow(() -> new IllegalArgumentException("Test case not found: " + testCaseId));
 
@@ -338,8 +327,7 @@ public String updateTestCaseCategory(String testCaseId, String newCategory) {
  */
 public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
     logger.info("Service: Retrieving events for test case ID: {}", testCaseId);
-
-    // Parse the test case ID
+ 
     UUID testCaseUuid;
     try {
         testCaseUuid = UUID.fromString(testCaseId);
@@ -347,18 +335,14 @@ public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
         throw new IllegalArgumentException("Invalid test case ID format");
     }
     
-    // Use AtomicBoolean to track if any events were auto-healed (can be modified in lambda)
     final AtomicBoolean hasAutoHealedEvents = new AtomicBoolean(false);
-
-    // Find the test case
+ 
     InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
             .orElseThrow(() -> new IllegalArgumentException("Test case not found: " + testCaseId));
-
-    // Fetch events for this test case
+ 
     List<EventsTable> events = eventsTableRepository.findByTestcaseId(testCaseUuid);
     logger.info("Found {} events for test case ID: {}", events.size(), testCaseId);
 
-    // Convert EventsTable entities to EventDto objects and check for auto-healed events
     List<EventDto> eventDtos = events.stream()
             .map(event -> {
                 EventDto dto = new EventDto();
@@ -372,8 +356,8 @@ public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
                 dto.setAssertion(event.getAssertion());
                 dto.setAssertionStatus(event.getAssertionStatus());
                 dto.setCreatedAt(event.getCreatedAt());
-                
-                // Check if this event was auto-healed
+                dto.setSequenceNumber(event.getSequenceNumber());
+                 
                 Boolean isAutoHealed = event.getAutoHealed();
                 if (isAutoHealed != null && isAutoHealed) {
                     hasAutoHealedEvents.set(true);
@@ -383,15 +367,14 @@ public TestCaseWithEventsDto getTestCaseEvents(String testCaseId) {
                 return dto;
             })
             .collect(Collectors.toList());
-
-    // Create and return the DTO with test case info, events, and autoHealed flag
+ 
     return new TestCaseWithEventsDto(
             testCase.getTestcaseId().toString(),
             testCase.getTcId(),
             testCase.getUrl(),
             testCase.getDescription(),
             testCase.getCategory().toLowerCase(),
-            hasAutoHealedEvents.get(), // Include the autoHealed flag
+            hasAutoHealedEvents.get(), 
             eventDtos);
 }
 
@@ -422,8 +405,7 @@ public List<TestExecutionResultDto> runMultipleTestCases(List<String> testCaseId
  */
 public String updateEvents(String testCaseId, List<EventDto> events) {
     logger.info("Service: Updating events for test case ID: {}", testCaseId);
-    
-    // Parse the test case ID
+     
     UUID testCaseUuid;
     try {
         testCaseUuid = UUID.fromString(testCaseId);
@@ -453,20 +435,17 @@ public String updateEvents(String testCaseId, List<EventDto> events) {
 @Transactional
 public String deleteTestCase(String testCaseId) {
     logger.info("Service: Deleting test case ID: {}", testCaseId);
-    
-    // Parse the test case ID
+     
     UUID testCaseUuid;
     try {
         testCaseUuid = UUID.fromString(testCaseId);
     } catch (IllegalArgumentException e) {
         throw new IllegalArgumentException("Invalid test case ID format");
     }
-    
-    // Find the test case
+     
     InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
             .orElseThrow(() -> new IllegalArgumentException("Test case not found: " + testCaseId));
-    
-    // Soft delete the test case by setting deletedAt timestamp
+     
     testCase.setDeletedAt(LocalDateTime.now());
     interactionTableRepository.save(testCase);
     

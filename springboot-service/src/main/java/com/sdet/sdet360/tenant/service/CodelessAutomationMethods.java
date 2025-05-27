@@ -135,18 +135,14 @@ public class CodelessAutomationMethods {
         List<TestExecutionResultDto> results = new ArrayList<>();
         
         for (String testCaseId : testCaseIds) {
-            try {
-                // Parse the test case ID
+            try { 
                 UUID testCaseUuid = UUID.fromString(testCaseId);
-                
-                // Find the test case
+                 
                 InteractionTable testCase = interactionTableRepository.findByTestcaseId(testCaseUuid)
                         .orElseThrow(() -> new IllegalArgumentException("Test case not found: " + testCaseId));
                 
-                // Fetch events for this test case in the exact order they were created (ordered by createdDate ASC)
-                List<EventsTable> events = eventsTableRepository.findByTestcaseId(testCaseUuid);
-                
-                // Log the event sequence for debugging
+                 List<EventsTable> events = eventsTableRepository.findByTestcaseId(testCaseUuid);
+                 
                 logger.info("Test case {} has {} events in the following sequence:", testCaseId, events.size());
                 for (int i = 0; i < events.size(); i++) {
                     EventsTable event = events.get(i);
@@ -167,36 +163,30 @@ public class CodelessAutomationMethods {
                     continue;
                 }
                 
-                // Store original event sequence for comparison after execution
-                List<UUID> originalEventSequence = events.stream()
+                 List<UUID> originalEventSequence = events.stream()
                         .map(EventsTable::getId)
                         .collect(Collectors.toList());
                         
                 logger.info("Original event sequence order: {}", originalEventSequence);
                 
-                // Execute the test case using Selenium WebDriver
-                TestExecutionResultDto result = seleniumTestExecutor.executeTestCase(
+                 TestExecutionResultDto result = seleniumTestExecutor.executeTestCase(
                         testCaseId,
                         testCase.getUrl(),
                         events
                 );
                 
-                // Update assertion status and save auto-healed events for successful test execution
-                if ("SUCCESS".equals(result.getStatus())) {
+                 if ("SUCCESS".equals(result.getStatus())) {
                     logger.info("Test case {} executed successfully, updating assertion status and auto-healed events", testCaseId);
                     
-                    // Get the event IDs from the result
-                    List<String> eventIds = result.getEventIds();
-                    if (eventIds != null && !eventIds.isEmpty()) {
-                        // First log the event status after execution
+                     List<String> eventIds = result.getEventIds();
+                    if (eventIds != null && !eventIds.isEmpty()) { 
                         logger.info("Events after execution: ");
                         for (int i = 0; i < events.size(); i++) {
                             EventsTable event = events.get(i);
                             logger.info("  Event #{}: ID={}, Action={}, XPath={}, AutoHealed={}", 
                                     i, event.getId(), event.getAction(), event.getRelativeXpath(), event.getAutoHealed());
                         }
-                        
-                        // Update events while preserving order
+                         
                         Map<UUID, EventsTable> eventMap = new HashMap<>();
                         for (EventsTable event : events) {
                             eventMap.put(event.getId(), event);
@@ -205,27 +195,20 @@ public class CodelessAutomationMethods {
                         for (EventsTable event : events) {
                             boolean needsUpdate = false;
                             
-                            // Check if this event has assertion enabled
                             if (event.getAssertion() != null && event.getAssertion()) {
-                                // Update assertion status to true for successful execution
                                 event.setAssertionStatus(true);
                                 needsUpdate = true;
                             }
                             
-                            // Check if this event was auto-healed (updated in SeleniumTestExecutor)
                             if (event.getAutoHealed() != null && event.getAutoHealed()) {
                                 logger.info("Auto-healed event detected for ID: {}, new XPath: {}", 
                                         event.getId(), event.getRelativeXpath());
                                 needsUpdate = true;
                             } 
                             if (needsUpdate) {
-                                // Keep the original sequence/order value when saving
-                                // This ensures event order is preserved
                                 EventsTable existingEvent = eventsTableRepository.findById(event.getId())
                                         .orElse(event);
-                                
-                                // Only update the fields that were changed during auto-healing
-                                // but preserve the sequence
+                                 
                                 if (event.getRelativeXpath() != null) {
                                     existingEvent.setRelativeXpath(event.getRelativeXpath());
                                 }
@@ -236,13 +219,24 @@ public class CodelessAutomationMethods {
                                     existingEvent.setAssertionStatus(event.getAssertionStatus());
                                 }
                                 
+                                // Ensure sequence number is preserved when updating events
+                                if (existingEvent.getSequenceNumber() == null) {
+                                    // If sequence number is not set, set it based on the index in the original list
+                                    for (int i = 0; i < events.size(); i++) {
+                                        if (events.get(i).getId().equals(existingEvent.getId())) {
+                                            existingEvent.setSequenceNumber(i);
+                                            break;
+                                        }
+                                    }
+                                }
+                                
                                 eventsTableRepository.save(existingEvent);
-                                logger.info("Updated event ID: {} while preserving sequence", existingEvent.getId());
+                                logger.info("Updated event ID: {} with sequence number {}", 
+                                        existingEvent.getId(), existingEvent.getSequenceNumber());
                             }
                         }
                     }
-                    
-                    // Log if auto-healing was used
+                     
                     if (result.isAutoHealed()) {
                         logger.info("Test case {} used auto-healing during execution", testCaseId);
                     }

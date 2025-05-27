@@ -23,6 +23,7 @@ CREATE TABLE event_tables (
     assertion BOOLEAN,
     assertion_status BOOLEAN,
     auto_healed BOOLEAN,
+    sequence_number INT,
     is_modified BOOLEAN,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
