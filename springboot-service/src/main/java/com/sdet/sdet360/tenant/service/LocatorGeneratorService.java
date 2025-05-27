@@ -1,19 +1,22 @@
 package com.sdet.sdet360.tenant.service;
 
 import com.sdet.sdet360.tenant.model.Vertical;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.Duration;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,14 +34,32 @@ public class LocatorGeneratorService {
     }
 
     public Map<String, String> extractLocatorsFromUrl(String url, String tool) {
+        WebDriverManager.chromedriver().setup();
+
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--window-size=1920,1080");
+
+        WebDriver driver = new ChromeDriver(options);
+
         try {
-            Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (Java) Canvas")
-                    .get();
+            driver.get(url);
+
+            // Optional wait for full rendering
+            Thread.sleep(5000); // Replace with WebDriverWait if needed
+
+            String renderedHtml = driver.getPageSource();
+            Document doc = Jsoup.parse(renderedHtml);
             return extractLocators(doc, tool);
-        } catch (IOException e) {
-            logger.error("Error fetching URL {}: {}", url, e.getMessage());
-            throw new RuntimeException("Error fetching URL: " + e.getMessage(), e);
+
+        } catch (Exception e) {
+            logger.error("Error rendering URL {}: {}", url, e.getMessage());
+            throw new RuntimeException("Error rendering URL: " + e.getMessage(), e);
+        } finally {
+            driver.quit();
         }
     }
 
@@ -54,7 +75,8 @@ public class LocatorGeneratorService {
             if (!isValidElement(element)) continue;
             String keyName = generateVariableName(element);
             String locator = generateLocator(element, tool);
-            if (keyName != null && !keyName.isEmpty() && locator != null) {
+
+            if (keyName != null && locator != null) {
                 locators.put(keyName, locator);
             }
         }
@@ -62,71 +84,45 @@ public class LocatorGeneratorService {
     }
 
     private boolean isValidElement(Element element) {
-        String tag = element.tagName();
-        Set<String> ignored = Set.of("script", "noscript", "style", "meta", "link");
-        if (ignored.contains(tag)) return false;
+        Set<String> ignoredTags = Set.of("script", "noscript", "style", "meta", "link");
+        if (ignoredTags.contains(element.tagName())) return false;
         if ("hidden".equalsIgnoreCase(element.attr("type"))) return false;
-        if ((tag.equals("div") || tag.equals("span"))
-                && !element.hasAttr("id")
-                && !element.hasAttr("name")
-                && !element.hasAttr("aria-label")
-                && !element.hasAttr("placeholder")
-                && element.attributes().asList().stream().noneMatch(a -> a.getKey().startsWith("data-"))) {
+
+        if (element.tagName().matches("div|span") &&
+                !(element.hasAttr("id") || element.hasAttr("name") || element.hasAttr("placeholder") ||
+                        element.hasAttr("aria-label") || element.hasAttr("data-automation-id"))) {
             return false;
         }
         return true;
     }
 
     private String generateVariableName(Element element) {
-        List<String> sources = List.of(
-                element.attr("id"),
+        List<String> candidates = Arrays.asList(
+                element.attr("data-automation-id"),
                 element.attr("name"),
+                element.attr("id"),
                 element.attr("placeholder"),
                 element.attr("aria-label"),
-                element.attr("title")
+                element.attr("title"),
+                String.join("_", element.classNames().stream().limit(2).collect(Collectors.toList()))
         );
-        String cls = element.classNames().stream().limit(2).collect(Collectors.joining("_"));
-        if (!cls.isBlank()) sources = List.<String>copyOf(sources).stream().collect(Collectors.toList());
-        // data- attribute
-        String dataAttr = element.attributes().asList().stream()
-                .map(a -> a.getKey())
-                .filter(k -> k.startsWith("data-"))
-                .findFirst().orElse(null);
-        if (dataAttr != null) sources = List.<String>copyOf(sources).stream().collect(Collectors.toList());
-        for (String value : sources) {
-            if (value != null && !value.isBlank()) {
-                return value.replaceAll("[^A-Za-z0-9_]", "_").toLowerCase();
+
+        for (String val : candidates) {
+            if (val != null && !val.isBlank()) {
+                String cleaned = val.replaceAll("[^a-zA-Z0-9]", " ").trim().toLowerCase();
+                String[] parts = cleaned.split("\\s+");
+                if (parts.length == 0) continue;
+                return parts[0] + Arrays.stream(parts, 1, parts.length)
+                        .map(s -> s.substring(0, 1).toUpperCase() + s.substring(1))
+                        .collect(Collectors.joining());
             }
         }
         return null;
     }
 
     private String generateLocator(Element element, String tool) {
-        String locator = null;
-
         if ("cypress".equalsIgnoreCase(tool)) {
-            for (org.jsoup.nodes.Attribute attr : element.attributes()) {
-                if (attr.getKey().equalsIgnoreCase("data-automation-id") && !attr.getValue().isBlank()) {
-                    locator = String.format("[data-automation-id='%s']", attr.getValue());
-                    break;
-                }
-            }
-            if (locator == null && element.hasAttr("name")) {
-                locator = String.format("%s[name='%s']", element.tagName(), element.attr("name"));
-            } else if (locator == null && element.hasAttr("placeholder")) {
-                locator = String.format("%s[placeholder='%s']", element.tagName(), element.attr("placeholder"));
-            } else if (locator == null && element.hasAttr("aria-label")) {
-                locator = String.format("%s[aria-label='%s']", element.tagName(), element.attr("aria-label"));
-            } else if (locator == null && element.hasAttr("title")) {
-                locator = String.format("%s[title='%s']", element.tagName(), element.attr("title"));
-            } else if (locator == null && element.hasAttr("id")) {
-                locator = String.format("%s#%s", element.tagName(), element.attr("id"));
-            } else if (locator == null && !element.classNames().isEmpty()) {
-                locator = String.format("%s.%s", element.tagName(), element.classNames().iterator().next());
-            }
-
-            if (locator == null) return null;
-            return formatLocator(locator, tool);
+            return generateCypressLocator(element);
         }
 
         // Default XPath-based locators
@@ -140,21 +136,34 @@ public class LocatorGeneratorService {
         } else if (element.hasAttr("aria-label")) {
             xpath = String.format("//%s[@aria-label=\"%s\"]", element.tagName(), element.attr("aria-label"));
         } else if (!element.classNames().isEmpty()) {
-            String firstClass = element.classNames().iterator().next();
-            xpath = String.format("//%s[contains(@class, \"%s\")]", element.tagName(), firstClass);
+            String cls = element.classNames().iterator().next();
+            xpath = String.format("//%s[contains(@class, \"%s\")]", element.tagName(), cls);
         } else if (element.hasAttr("title")) {
             xpath = String.format("//%s[@title=\"%s\"]", element.tagName(), element.attr("title"));
         } else {
-            String dataKey = element.attributes().asList().stream()
-                    .map(a -> a.getKey())
-                    .filter(k -> k.startsWith("data-"))
-                    .findFirst().orElse(null);
-            if (dataKey != null) {
-                xpath = String.format("//%s[@%s=\"%s\"]", element.tagName(), dataKey, element.attr(dataKey));
+            for (org.jsoup.nodes.Attribute attr : element.attributes()) {
+                if (attr.getKey().startsWith("data-")) {
+                    xpath = String.format("//%s[@%s=\"%s\"]", element.tagName(), attr.getKey(), attr.getValue());
+                    break;
+                }
             }
         }
-        if (xpath == null) return null;
-        return formatLocator(xpath, tool);
+
+        return xpath != null ? formatLocator(xpath, tool) : null;
+    }
+
+    private String generateCypressLocator(Element element) {
+        if (element.hasAttr("data-automation-id")) {
+            String val = element.attr("data-automation-id");
+            if (!val.isBlank() && !isDynamic(val)) {
+                return String.format("cy.get(\"[data-automation-id='%s']\")", val);
+            }
+        }
+        return null;
+    }
+
+    private boolean isDynamic(String val) {
+        return Pattern.compile("^(mui|auto|random|[a-z]+)?[-_]?\\d{2,}$", Pattern.CASE_INSENSITIVE).matcher(val).find();
     }
 
     private String formatLocator(String xpath, String tool) {
