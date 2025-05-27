@@ -12,4 +12,6 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
     Optional<Tenant> findByDomain(String domain);
 
 	Optional<Tenant> findBySubdomain(String tenantSubdomain);
+
+    Optional<Tenant> findByDomainAndSubdomain(String domain, String subdomain);
 }
