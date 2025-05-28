@@ -22,14 +22,18 @@ import java.util.UUID;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    @Autowired
-    private JwtTokenProvider tokenProvider;
+    private final JwtTokenProvider tokenProvider;
+    private final TenantAwareUserDetailsService userDetailsService;
+    private final JwtCookieManager jwtCookieManager;
 
     @Autowired
-    private TenantAwareUserDetailsService userDetailsService;
-
-    @Autowired
-    private JwtCookieManager jwtCookieManager;
+    public JwtAuthenticationFilter(JwtTokenProvider tokenProvider,
+                                 TenantAwareUserDetailsService userDetailsService,
+                                 JwtCookieManager jwtCookieManager) {
+        this.tokenProvider = tokenProvider;
+        this.userDetailsService = userDetailsService;
+        this.jwtCookieManager = jwtCookieManager;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -39,17 +43,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = jwtCookieManager.getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                String username = tokenProvider.getUsernameFromJWT(jwt);
+                // Get the username/email from the JWT token
+                String usernameOrEmail = tokenProvider.getUsernameFromJWT(jwt);
                 UUID tenantId = tokenProvider.getTenantIdFromJWT(jwt);
 
                 // Update tenant context
                 UUID currentTenantId = TenantContextHolder.getTenantId();
-                if (!currentTenantId.equals(tenantId)) {
-                    logger.warn("Tenant mismatch between token ({}) and context ({})", tenantId, currentTenantId);
+                if (currentTenantId == null || !currentTenantId.equals(tenantId)) {
+                    logger.info("Setting tenant context to: {}", tenantId);
                     TenantContextHolder.setTenantId(tenantId);
                 }
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                // Load user details using either username or email
+                UserDetails userDetails = userDetailsService.loadUserByUsername(usernameOrEmail);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

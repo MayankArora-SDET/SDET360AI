@@ -84,17 +84,14 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
     private Optional<UUID> resolveTenantFromDomainAndSubdomain(HttpServletRequest request) {
         String serverName = request.getServerName();
         logger.info("Resolving tenant from server name: {}", serverName);
-
-        // Temporarily set to master tenant to ensure we can access the tenants table
+ 
         UUID originalTenantId = TenantContextHolder.getTenantId();
         TenantContextHolder.setTenantId(MASTER_TENANT_ID);
 
-        try {
-            // Parse domain and subdomain from server name
+        try { 
             DomainInfo domainInfo = parseDomainInfo(serverName);
             logger.debug("Parsed domain info - Domain: {}, Subdomain: {}", domainInfo.domain, domainInfo.subdomain);
-
-            // First try to find tenant by exact domain and subdomain match
+ 
             if (domainInfo.subdomain != null) {
                 Optional<Tenant> tenant = tenantRepository.findByDomainAndSubdomain(domainInfo.domain, domainInfo.subdomain);
                 if (tenant.isPresent()) {
@@ -103,15 +100,13 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
                     return Optional.of(tenant.get().getTenantId());
                 }
             }
-
-            // If no subdomain match, try by domain only
+ 
             Optional<Tenant> tenant = tenantRepository.findByDomain(domainInfo.domain);
             if (tenant.isPresent()) {
                 logger.info("Tenant found by domain '{}': {}", domainInfo.domain, tenant.get().getTenantId());
                 return Optional.of(tenant.get().getTenantId());
             }
-
-            // Special handling for localhost with subdomain
+ 
             if (LOCALHOST_DOMAIN.equals(domainInfo.domain) && domainInfo.subdomain != null) {
                 tenant = tenantRepository.findBySubdomain(domainInfo.subdomain);
                 if (tenant.isPresent()) {
@@ -133,26 +128,21 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
         if (serverName == null || serverName.isEmpty()) {
             return new DomainInfo(null, null);
         }
-
-        // Handle localhost with subdomain (e.g., alpha.localhost)
+ 
         if (serverName.endsWith("." + LOCALHOST_DOMAIN)) {
             String subdomain = serverName.replace("." + LOCALHOST_DOMAIN, "");
             return new DomainInfo(LOCALHOST_DOMAIN, subdomain.isEmpty() ? null : subdomain);
         }
-
-        // Handle regular domains with subdomains (e.g., alpha.sdet360.ai)
+ 
         String[] parts = serverName.split("\\.");
 
-        if (parts.length >= 3) {
-            // Extract subdomain and reconstruct domain
+        if (parts.length >= 3) { 
             String subdomain = parts[0];
             String domain = String.join(".", java.util.Arrays.copyOfRange(parts, 1, parts.length));
             return new DomainInfo(domain, subdomain);
         } else if (parts.length == 2) {
-            // No subdomain, just domain (e.g., sdet360.ai)
             return new DomainInfo(serverName, null);
         } else {
-            // Single part (e.g., localhost, sdet360)
             return new DomainInfo(serverName, null);
         }
     }

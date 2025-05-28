@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class TenantAwareUserDetailsService implements UserDetailsService {
@@ -20,13 +19,20 @@ public class TenantAwareUserDetailsService implements UserDetailsService {
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException { 
-        UUID tenantId = TenantContextHolder.getTenantId();
-         
-        List<User> users = userRepository.findByUsername(username);
+    public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException { 
+        // Get the current tenant context
+        TenantContextHolder.getTenantId();
+        
+        // Try to find by email first
+        List<User> users = userRepository.findByEmail(usernameOrEmail);
+        
+        // If not found by email, try by username
+        if (users.isEmpty()) {
+            users = userRepository.findByUsername(usernameOrEmail);
+        }
         
         if (users.isEmpty()) {
-            throw new UsernameNotFoundException("User not found with username: " + username);
+            throw new UsernameNotFoundException("User not found with username/email: " + usernameOrEmail);
         }
          
         User user = users.get(0);
