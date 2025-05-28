@@ -20,6 +20,10 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
     private final TenantRepository tenantRepository;
     private final UUID MASTER_TENANT_ID = UUID.fromString("00000000-0000-0000-0000-000000000009");
 
+    private static final String LOCALHOST_DOMAIN = "localhost";
+    private static final String PRIMARY_DOMAIN = "sdet360.ai";
+    private static final String SECONDARY_DOMAIN = "sdet360";
+
     public TenantResolverInterceptor(TenantRepository tenantRepository) {
         this.tenantRepository = tenantRepository;
     }
@@ -33,89 +37,140 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
 
         logger.info("Incoming request: [{}] {} from domain: {} with tenant header: {}", method, requestURI, serverName, tenantIdHeader);
 
+        // Handle master tenant API routes
         if (requestURI.startsWith("/api/tenants")) {
             logger.info("Master tenant access detected, setting MASTER_TENANT_ID.");
             TenantContextHolder.setTenantId(MASTER_TENANT_ID);
             return true;
         }
 
+                // Try to resolve tenant from header first
         if (tenantIdHeader != null && !tenantIdHeader.isEmpty()) {
-            try {
-                UUID tenantId = UUID.fromString(tenantIdHeader);
-                if (tenantRepository.existsById(tenantId)) {
-                    logger.info("Tenant resolved from header: {}", tenantId);
-                    TenantContextHolder.setTenantId(tenantId);
-                    return true;
-                } else {
-                    logger.warn("Tenant ID from header does not exist: {}", tenantId);
-                }
-            } catch (IllegalArgumentException e) {
-                logger.error("Invalid tenant ID format in header: {}", tenantIdHeader, e);
+            if (resolveTenantFromHeader(tenantIdHeader)) {
+                return true;
             }
         }
 
-        Optional<UUID> tenantId = resolveTenantFromDomain(request);
+        // Try to resolve tenant from domain/subdomain
+        Optional<UUID> tenantId = resolveTenantFromDomainAndSubdomain(request);
 
         if (tenantId.isPresent()) {
-            logger.info("Tenant resolved from domain: {}", tenantId.get());
+            logger.info("Tenant resolved from domain/subdomain: {}", tenantId.get());
             TenantContextHolder.setTenantId(tenantId.get());
-        } else {
-            if ("localhost".equals(serverName)) {
-                Optional<Tenant> firstTenant = tenantRepository.findAll().stream().findFirst();
-                if (firstTenant.isPresent()) {
-                    logger.warn("No domain matched, defaulting to first tenant: {}", firstTenant.get().getTenantId());
-                    TenantContextHolder.setTenantId(firstTenant.get().getTenantId());
-                } else {
-                    logger.error("No tenants found in system.");
-                    throw new IllegalStateException("No tenants found in the system. Please create at least one tenant.");
-                }
-            } else if ("sdet360.ai".equals(serverName)) {
-                Optional<Tenant> firstTenant = tenantRepository.findAll().stream().findFirst();
-                if (firstTenant.isPresent()) {
-                    logger.warn("No domain matched, defaulting to first tenant: {}", firstTenant.get().getTenantId());
-                    TenantContextHolder.setTenantId(firstTenant.get().getTenantId());
-                } else {
-                    logger.error("No tenants found in system.");
-                    throw new IllegalStateException("No tenants found in the system. Please create at least one tenant.");
-                }
-            }else if ("sdet360".equals(serverName)) {
-                Optional<Tenant> firstTenant = tenantRepository.findAll().stream().findFirst();
-                if (firstTenant.isPresent()) {
-                    logger.warn("No domain matched, defaulting to first tenant: {}", firstTenant.get().getTenantId());
-                    TenantContextHolder.setTenantId(firstTenant.get().getTenantId());
-                } else {
-                    logger.error("No tenants found in system.");
-                    throw new IllegalStateException("No tenants found in the system. Please create at least one tenant.");
-                }
-            } else {
-                logger.error("Unknown tenant domain: {}", serverName);
-                throw new IllegalArgumentException("Unknown tenant domain: " + serverName);
-            }
+            return true;
         }
 
+        // Fallback logic for specific domains
+        handleFallbackTenantResolution(serverName);
         return true;
     }
 
-    private Optional<UUID> resolveTenantFromDomain(HttpServletRequest request) {
-        String domain = request.getServerName();
-        logger.info("Resolving tenant from domain: {}", domain);
+    private boolean resolveTenantFromHeader(String tenantIdHeader) {
+        try {
+            UUID tenantId = UUID.fromString(tenantIdHeader);
+            if (tenantRepository.existsById(tenantId)) {
+                logger.info("Tenant resolved from header: {}", tenantId);
+                TenantContextHolder.setTenantId(tenantId);
+                return true;
+            } else {
+                logger.warn("Tenant ID from header does not exist: {}", tenantId);
+            }
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid tenant ID format in header: {}", tenantIdHeader, e);
+        }
+        return false;
+    }
+
+    private Optional<UUID> resolveTenantFromDomainAndSubdomain(HttpServletRequest request) {
+        String serverName = request.getServerName();
+        logger.info("Resolving tenant from server name: {}", serverName);
 
         // Temporarily set to master tenant to ensure we can access the tenants table
         UUID originalTenantId = TenantContextHolder.getTenantId();
         TenantContextHolder.setTenantId(MASTER_TENANT_ID);
 
         try {
-            if (domain.endsWith(".localhost")) {
-                String tenantSubdomain = domain.replace(".localhost", "");
-                logger.debug("Detected subdomain: {}", tenantSubdomain);
-                return tenantRepository.findBySubdomain(tenantSubdomain)
-                        .map(Tenant::getTenantId);
+            // Parse domain and subdomain from server name
+            DomainInfo domainInfo = parseDomainInfo(serverName);
+            logger.debug("Parsed domain info - Domain: {}, Subdomain: {}", domainInfo.domain, domainInfo.subdomain);
+
+            // First try to find tenant by exact domain and subdomain match
+            if (domainInfo.subdomain != null) {
+                Optional<Tenant> tenant = tenantRepository.findByDomainAndSubdomain(domainInfo.domain, domainInfo.subdomain);
+                if (tenant.isPresent()) {
+                    logger.info("Tenant found by domain '{}' and subdomain '{}': {}",
+                            domainInfo.domain, domainInfo.subdomain, tenant.get().getTenantId());
+                    return Optional.of(tenant.get().getTenantId());
+                }
             }
 
-            return tenantRepository.findByDomain(domain)
-                    .map(Tenant::getTenantId);
+            // If no subdomain match, try by domain only
+            Optional<Tenant> tenant = tenantRepository.findByDomain(domainInfo.domain);
+            if (tenant.isPresent()) {
+                logger.info("Tenant found by domain '{}': {}", domainInfo.domain, tenant.get().getTenantId());
+                return Optional.of(tenant.get().getTenantId());
+            }
+
+            // Special handling for localhost with subdomain
+            if (LOCALHOST_DOMAIN.equals(domainInfo.domain) && domainInfo.subdomain != null) {
+                tenant = tenantRepository.findBySubdomain(domainInfo.subdomain);
+                if (tenant.isPresent()) {
+                    logger.info("Tenant found by subdomain '{}' on localhost: {}",
+                            domainInfo.subdomain, tenant.get().getTenantId());
+                    return Optional.of(tenant.get().getTenantId());
+                }
+            }
+
+            logger.warn("No tenant found for domain '{}' and subdomain '{}'", domainInfo.domain, domainInfo.subdomain);
+            return Optional.empty();
+
         } finally {
             TenantContextHolder.setTenantId(originalTenantId);
+        }
+    }
+
+    private DomainInfo parseDomainInfo(String serverName) {
+        if (serverName == null || serverName.isEmpty()) {
+            return new DomainInfo(null, null);
+        }
+
+        // Handle localhost with subdomain (e.g., alpha.localhost)
+        if (serverName.endsWith("." + LOCALHOST_DOMAIN)) {
+            String subdomain = serverName.replace("." + LOCALHOST_DOMAIN, "");
+            return new DomainInfo(LOCALHOST_DOMAIN, subdomain.isEmpty() ? null : subdomain);
+        }
+
+        // Handle regular domains with subdomains (e.g., alpha.sdet360.ai)
+        String[] parts = serverName.split("\\.");
+
+        if (parts.length >= 3) {
+            // Extract subdomain and reconstruct domain
+            String subdomain = parts[0];
+            String domain = String.join(".", java.util.Arrays.copyOfRange(parts, 1, parts.length));
+            return new DomainInfo(domain, subdomain);
+        } else if (parts.length == 2) {
+            // No subdomain, just domain (e.g., sdet360.ai)
+            return new DomainInfo(serverName, null);
+        } else {
+            // Single part (e.g., localhost, sdet360)
+            return new DomainInfo(serverName, null);
+        }
+    }
+
+    private void handleFallbackTenantResolution(String serverName) {
+        if (LOCALHOST_DOMAIN.equals(serverName) || PRIMARY_DOMAIN.equals(serverName) || SECONDARY_DOMAIN.equals(serverName)) {
+            Optional<Tenant> firstTenant = tenantRepository.findAll().stream().findFirst();
+            if (firstTenant.isPresent()) {
+                logger.warn("No specific tenant matched for '{}', defaulting to first tenant: {}",
+                        serverName, firstTenant.get().getTenantId());
+                TenantContextHolder.setTenantId(firstTenant.get().getTenantId());
+            } else {
+                logger.error("No tenants found in system for fallback.");
+                throw new IllegalStateException("No tenants found in the system. Please create at least one tenant.");
+            }
+        } else {
+            logger.error("Unknown tenant domain: {}", serverName);
+            throw new IllegalArgumentException("Unknown tenant domain: " + serverName);
         }
     }
 
@@ -123,5 +178,15 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
         TenantContextHolder.clear();
         logger.debug("Cleared tenant context after request completion.");
+    }
+
+    private static class DomainInfo {
+        final String domain;
+        final String subdomain;
+
+        DomainInfo(String domain, String subdomain) {
+            this.domain = domain;
+            this.subdomain = subdomain;
+        }
     }
 }
