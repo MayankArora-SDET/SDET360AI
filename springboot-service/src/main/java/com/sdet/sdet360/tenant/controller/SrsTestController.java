@@ -49,19 +49,50 @@ public class SrsTestController {
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().body("Please upload a file");
             }
-
-            // Check if file is a PDF
-            if (!file.getContentType().equals(MediaType.APPLICATION_PDF_VALUE)) {
-                return ResponseEntity.badRequest().body("Only PDF files are allowed");
+ 
+            String contentType = file.getContentType();
+            String fileName = file.getOriginalFilename();
+            
+            boolean isSupported = isSupportedFileType(contentType, fileName);
+            
+            if (!isSupported) {
+                return ResponseEntity.badRequest().body("Only PDF, TXT, DOC, and DOCX files are allowed");
             }
 
-            // Process the file and generate Jira stories
-            JsonNode result = srsService.processSrsPdfWithJiraStories(file);
+             JsonNode result = srsService.processDocumentWithJiraStories(file);
 
             return ResponseEntity.ok(result);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to generate Jira stories from SRS PDF: " + e.getMessage());
+                    .body("Failed to generate Jira stories from document: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Check if the file type is supported for processing
+     * @param contentType The content type of the file
+     * @param fileName The name of the file
+     * @return true if the file type is supported, false otherwise
+     */
+    private boolean isSupportedFileType(String contentType, String fileName) {
+    
+        if (contentType != null) {
+            if (contentType.equals("application/pdf") || 
+                contentType.equals("text/plain") || 
+                contentType.equals("application/msword") || 
+                contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document")) {
+                return true;
+            }
+        }
+        
+        if (fileName != null && fileName.contains(".")) {
+            String extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+            return extension.equals("pdf") || 
+                   extension.equals("txt") || 
+                   extension.equals("doc") || 
+                   extension.equals("docx");
+        }
+        
+        return false;
     }
 }
