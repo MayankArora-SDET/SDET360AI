@@ -8,6 +8,7 @@ import com.sdet.sdet360.tenant.payload.JwtAuthenticationResponse;
 import com.sdet.sdet360.tenant.payload.LoginRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -40,16 +41,20 @@ public class AuthController {
     @GetMapping("/check-session")
     public ResponseEntity<Map<String, Boolean>> checkSession(@CookieValue(value = "session", required = false) String sessionCookie) {
         boolean hasSession = sessionCookie != null && !sessionCookie.isEmpty();
-        return ResponseEntity.ok(Map.of("session", hasSession));
+        if (!hasSession) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("session", false));
+        }
+        return ResponseEntity.ok(Map.of("session", true));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,
                                               HttpServletResponse response) {
-        // Authenticate user
+        // Authenticate user with email
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
+                        loginRequest.getEmail(),
                         loginRequest.getPassword()
                 )
         );
