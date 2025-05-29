@@ -66,8 +66,8 @@ public class SeleniumTestExecutor {
         List<Map<String, Object>> executedEvents = new ArrayList<>();
         List<String> eventIds = new ArrayList<>(); // Add list to collect event IDs
         
-        try {
-            WebDriverManager.chromedriver().browserVersion("77.0.3865.40").setup();
+        try { 
+            WebDriverManager.chromedriver().setup();
             ChromeOptions options = new ChromeOptions();
             options.addArguments("start-maximized");
             options.addArguments("enable-automation");
