@@ -11,19 +11,28 @@ echo "====================================================="
 
 # Set working directory to the script location
 cd "$(dirname "$0")"
+# Function to fix line endings
+fix_line_endings() {
+    echo "Fixing line endings for shell scripts..."
+    find . -name "*.sh" -type f -exec sed -i 's/\r$//' {} \; 2>/dev/null || true
+    echo "Line endings fixed."
+}
+
+# Fix line endings first thing
+fix_line_endings
 
 # Check for required tools and install if missing
 echo "Checking required tools..."
 
 # Check if Homebrew is installed
-if ! command -v brew &> /dev/null; then
-    echo "Homebrew is not installed. Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    if [ $? -ne 0 ]; then
-        echo "Error: Failed to install Homebrew. Please install it manually."
-        exit 1
-    fi
-fi
+# if ! command -v brew &> /dev/null; then
+#     echo "Homebrew is not installed. Installing Homebrew..."
+#     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+#     if [ $? -ne 0 ]; then
+#         echo "Error: Failed to install Homebrew. Please install it manually."
+#         exit 1
+#     fi
+# fi
 
 # Check and install required tools
 for cmd in docker java node npm python3; do
@@ -56,12 +65,14 @@ if ! command -v mvn &> /dev/null; then
     echo "Maven not found, but we'll use the Maven wrapper instead."
 fi
 
+
+
 # Function to compile proto files
 compile_proto() {
     echo "Compiling Protocol Buffers..."
     chmod +x ./compile-proto.sh
     ./compile-proto.sh
-    if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ]; then   
         echo "Error: Failed to compile protocol buffers."
         exit 1
     fi

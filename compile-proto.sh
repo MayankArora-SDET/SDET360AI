@@ -3,7 +3,7 @@ set -e
 
 # Versions
 GRPC_VERSION=1.58.0
-PROTOBUF_VERSION=4.30.2
+PROTOBUF_VERSION=3.25.3
 
 
 # Directories
