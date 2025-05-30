@@ -1,5 +1,6 @@
 from .ollama_client import OllamaClient
 from .grok_client import GrokClient
+from .meta_client import MetaClient
 
 class LLMClientFactory:
     @staticmethod
@@ -9,5 +10,7 @@ class LLMClientFactory:
             return OllamaClient()
         elif model_l == "grok":
             return GrokClient()
+        elif model_l == "meta":
+            return MetaClient()
         else:
             raise ValueError(f"Unknown LLM model: {model}")

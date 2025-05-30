@@ -214,7 +214,7 @@ Example Inputs:
         
         metadata = {"template_name": "JIRA_STORIES"}
         
-        prompt = f"""Generate Jira stories in ordered list from the following extracted SRS (Software Requirements Specification) text:
+        prompt = f"""Generate Jira stories in ordered list from the following extracted text:
 
 {srs_text}
 
