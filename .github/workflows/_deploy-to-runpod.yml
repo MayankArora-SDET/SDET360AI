@@ -1,0 +1,93 @@
+name: Deploy to RunPod
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/sdet360ai:latest
+        cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/sdet360ai:buildcache
+        cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/sdet360ai:buildcache,mode=max
+        
+    - name: Deploy to RunPod
+      env:
+        RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/sdet360ai:latest
+      run: |
+        # Install RunPod CLI if available, otherwise use API
+        if command -v npm &> /dev/null; then
+          npm install -g runpodctl
+          runpodctl login --api-key $RUNPOD_API_KEY
+          
+          # Check if pod exists and update, otherwise create new
+          POD_ID=$(runpodctl get pods --template-id sdet360ai --output json | jq -r '.pods[0].id // empty')
+          
+          if [ -n "$POD_ID" ]; then
+            echo "Updating existing pod: $POD_ID"
+            runpodctl update pod $POD_ID --container-disk-size 20 --image $DOCKER_IMAGE
+          else
+            echo "Creating new pod"
+            runpodctl create pod \
+              --name "SDET360AI" \
+              --image $DOCKER_IMAGE \
+              --cloud "AWS US East" \
+              --container-disk-size 20 \
+              --volume-disk-size 100 \
+              --ports 4201:4201,8081:8081,8001:8001,50051:50051 \
+              --env-var "SPRING_PROFILES_ACTIVE=prod"
+          fi
+        else
+          # Use curl with RunPod API if CLI is not available
+          echo "Using RunPod API directly"
+          
+          # Get pod ID if exists
+          POD_ID=$(curl -s -H "Authorization: Bearer $RUNPOD_API_KEY" \
+                  "https://api.runpod.io/v2/pods?templateId=sdet360ai" | \
+                  jq -r '.pods[0].id // empty')
+          
+          if [ -n "$POD_ID" ]; then
+            echo "Updating existing pod: $POD_ID"
+            curl -X PUT -H "Content-Type: application/json" \
+                 -H "Authorization: Bearer $RUNPOD_API_KEY" \
+                 "https://api.runpod.io/v2/pod/$POD_ID" \
+                 -d "{\"containerDiskSize\": 20, \"imageName\": \"$DOCKER_IMAGE\"}"
+          else
+            echo "Creating new pod"
+            curl -X POST -H "Content-Type: application/json" \
+                 -H "Authorization: Bearer $RUNPOD_API_KEY" \
+                 "https://api.runpod.io/v2/pod" \
+                 -d "{
+                   \"name\": \"SDET360AI\",
+                   \"imageName\": \"$DOCKER_IMAGE\",
+                   \"cloudType\": \"AWS US East\",
+                   \"containerDiskSize\": 20,
+                   \"volumeDiskSize\": 100,
+                   \"ports\": \"4201:4201,8081:8081,8001:8001,50051:50051\",
+                   \"env\": {\"SPRING_PROFILES_ACTIVE\": \"prod\"}
+                 }"
+          fi
+        fi

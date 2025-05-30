@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 12345
     ports:
-      - "5433:5432"  # Changed external port to 5433
+      - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -61,7 +61,7 @@ services:
       FASTAPI_GRPC_HOST: ai-service
       FASTAPI_GRPC_PORT: 50051
     ports:
-      - "8081:8080"  # Changed external port to 8081
+      - "8081:8080"
     volumes:
       - ./springboot-service:/app
 
@@ -75,8 +75,8 @@ services:
       proto-compiler:
         condition: service_completed_successfully
     ports:
-      - "8001:8000"  # Changed external port to 8001  # FastAPI HTTP port
-      - "50051:50051"  # gRPC port
+      - "8001:8000"
+      - "50051:50051"
     volumes:
       - ./ai-service:/app
 
@@ -87,7 +87,7 @@ services:
       dockerfile: Dockerfile
     container_name: sdet360-frontend
     ports:
-      - "4201:80"  # Changed external port to 4201
+      - "4201:80"
     depends_on:
       - springboot-service
 
