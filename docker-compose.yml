@@ -35,25 +35,31 @@ services:
       - ./springboot-service/src/main/java:/java-output
       - ./ai-service/app/generated:/python-output
     command: >
-      /bin/sh -c "apk add --no-cache protoc && \
+      /bin/sh -c "apk add --no-cache protobuf-dev=3.25.3-r1 && \
+                  echo 'Creating Java output directory...' && \
                   mkdir -p /java-output/com/sdet/sdet360/grpc/generated && \
+                  echo 'Generating Java code...' && \
                   protoc --java_out=/java-output \
                          --proto_path=/proto \
                          /proto/ai_service.proto && \
+                  echo 'Creating Python output directory...' && \
                   mkdir -p /python-output && \
                   touch /python-output/__init__.py && \
+                  echo 'Installing Python dependencies...' && \
                   pip install --no-cache-dir grpcio-tools==1.58.0 && \
+                  echo 'Generating Python code...' && \
                   python3 -m grpc_tools.protoc \
                          -I=/proto \
                          --python_out=/python-output \
                          --grpc_python_out=/python-output \
-                         /proto/ai_service.proto"
+                         /proto/ai_service.proto && \
+                  echo 'Proto compilation completed successfully!'"
 
   # Spring Boot Service
   springboot-service:
     build:
-      context: ./springboot-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: springboot-service/Dockerfile
     container_name: sdet360-springboot
     networks:
       - sdet360-network
@@ -75,6 +81,9 @@ services:
       FASTAPI_GRPC_PORT: 50051
     volumes:
       - ./springboot-service:/app
+      - ./springboot-service/src/main/java:/app/src/main/java:ro
+    extra_hosts:
+      - "tenant1.localhost:127.0.0.1"
 
   # AI Service (FastAPI + gRPC)
   ai-service:
@@ -90,6 +99,8 @@ services:
     depends_on:
       proto-compiler:
         condition: service_completed_successfully
+    volumes:
+      - ./ai-service/app/generated:/app/app/generated:ro
 
   # Angular Frontend
   frontend:
@@ -97,6 +108,9 @@ services:
       context: ./SDETAIO
       dockerfile: Dockerfile
     container_name: sdet360-frontend
+    # Use container names directly in the same network
+    environment:
+      - NG_APP_API_URL=http://springboot-service:8080
     ports:
       - "4201:80"
     networks:
@@ -104,6 +118,9 @@ services:
     depends_on:
       - springboot-service
     restart: unless-stopped
+    # Add hostname mapping for tenant resolution
+    extra_hosts:
+      - "tenant1.localhost:127.0.0.1"
 
 volumes:
   postgres-data:

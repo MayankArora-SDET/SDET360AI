@@ -83,8 +83,29 @@ RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
 # Set up working directory
 WORKDIR /app
 
-# Copy application code
-COPY . /app/
+# Copy dependency files first to leverage Docker cache
+COPY SDETAIO/package*.json /app/SDETAIO/
+COPY springboot-service/pom.xml /app/springboot-service/
+COPY ai-service/requirements.txt /app/ai-service/
+
+# Install frontend dependencies
+WORKDIR /app/SDETAIO
+RUN npm install
+
+# Install backend dependencies
+WORKDIR /app/springboot-service
+RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
+    export PATH="$JAVA_HOME/bin:$PATH" && \
+    mvn dependency:go-offline -B
+
+# Install Python dependencies
+WORKDIR /app/ai-service
+RUN python -m pip install --upgrade pip && \
+    python -m pip install -r requirements.txt
+
+# Copy the rest of the application code
+WORKDIR /app
+COPY . .
 
 # Set up PostgreSQL
 USER postgres
@@ -98,25 +119,18 @@ USER root
 # Compile Protocol Buffers
 RUN chmod +x /app/compile-proto.sh && /app/compile-proto.sh
 
-# Build Spring Boot service with explicit JAVA_HOME
+# Build Spring Boot service
 WORKDIR /app/springboot-service
 RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
     export PATH="$JAVA_HOME/bin:$PATH" && \
-    echo "Using JAVA_HOME: $JAVA_HOME" && \
-    java -version && \
     mvn clean package -DskipTests
 
 # Build Angular frontend
 WORKDIR /app/SDETAIO
-RUN npm install && npm run build
-
-# Set up Python environment for AI service
-WORKDIR /app/ai-service
-RUN python -m pip install --upgrade pip && \
-    python -m pip install -r requirements.txt
+RUN npm run build
 
 # Expose ports
-EXPOSE 4201 8081 8001 50051 5433
+EXPOSE 4201 8080 8001 50051 5433
 
 # Create startup script
 WORKDIR /app
