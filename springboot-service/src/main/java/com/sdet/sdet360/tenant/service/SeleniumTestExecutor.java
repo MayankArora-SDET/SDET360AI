@@ -16,11 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import ru.yandex.qatools.ashot.AShot;
-import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
-import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
-import javax.imageio.ImageIO;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Base64;
 
 /**
  * Handles Selenium WebDriver test execution for automated test cases
@@ -41,7 +37,7 @@ public class SeleniumTestExecutor {
 
     private static final Logger logger = LoggerFactory.getLogger(SeleniumTestExecutor.class);
     private static final String SCREENSHOTS_BASE_DIR = System.getProperty("user.home") + "/sdet360/screenshots";
-    
+
     @Autowired
     private SelfHealingService selfHealingService;
 
@@ -55,17 +51,17 @@ public class SeleniumTestExecutor {
      */
     public TestExecutionResultDto executeTestCase(String testCaseId, String url, List<EventsTable> events) {
         logger.info("Executing test case {} with {} events at URL: {}", testCaseId, events.size(), url);
-        
+
         TestExecutionResultDto result = TestExecutionResultDto.builder()
                 .testCaseId(testCaseId)
                 .build();
-        
+
         WebDriver driver = null;
         boolean autoHealed = false;
         List<String> screenshots = new ArrayList<>();
         List<Map<String, Object>> executedEvents = new ArrayList<>();
         List<String> eventIds = new ArrayList<>(); // Add list to collect event IDs
-        
+
         try { 
             WebDriverManager.chromedriver().setup();
             ChromeOptions options = new ChromeOptions();
@@ -79,27 +75,27 @@ public class SeleniumTestExecutor {
 
             driver = new ChromeDriver(options);
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            
+
             // Initialize self-healing service
             selfHealingService.initialize(driver);
-            
+
             // Create screenshots directory
             Path screenshotsDir = Paths.get(SCREENSHOTS_BASE_DIR, testCaseId);
             Files.createDirectories(screenshotsDir);
-            
+
             // Navigate to URL
             driver.get(url);
-            
+
             // Take initial screenshot
             String initialScreenshot = takeScreenshot(driver, screenshotsDir, "initial");
             screenshots.add(initialScreenshot);
-            
+
             // First, create a map of event IDs for quick lookup during execution
             Map<UUID, Integer> eventIndexMap = new HashMap<>();
             for (int i = 0; i < events.size(); i++) {
                 eventIndexMap.put(events.get(i).getId(), i);
             }
-            
+
             // Execute each event in the exact order they were retrieved from the database
             // The events are already ordered by createdAt ASC from the repository query
             int eventIndex = 0;
@@ -114,39 +110,39 @@ public class SeleniumTestExecutor {
                 executedEvent.put("relativeXPath", event.getRelativeXpath());
                 executedEvent.put("value", event.getValue());
                 executedEvent.put("eventId", event.getId().toString()); // Add event ID to each executed event
-                
+
                 try {
                     String action = event.getAction();
                     String xpath = event.getRelativeXpath();
                     String value = event.getValue();
-                    
+
                     if (xpath == null || xpath.isEmpty()) {
                         logger.warn("Skipping event with empty XPath: {}", event);
                         executedEvent.put("executed", false);
                         executedEvent.put("error", "Empty XPath");
                         continue;
                     }
-                    
+
                     // Use self-healing service to get element
                     Map<String, Object> elementResult = selfHealingService.getClickableElement(xpath);
                     WebElement element = (WebElement) elementResult.get("element");
                     boolean elementAutoHealed = (boolean) elementResult.get("autoHealed");
-                    
+
                     // Update auto-healing information
                     executedEvent.put("autoHealed", elementAutoHealed);
                     if (elementAutoHealed) {
                         String healedXpath = (String) elementResult.get("healedXpath");
                         executedEvent.put("healedXPath", healedXpath);
                         logger.info("Auto-healed XPath from '{}' to '{}'", xpath, healedXpath);
-                        
+
                         // Update the class-level autoHealed flag
                         autoHealed = true;
-                        
+
                         // Update the event's XPath with the healed XPath
                         event.setRelativeXpath(healedXpath);
                         event.setAutoHealed(true);
                     }
-                    
+
                     // Execute action based on type
                     if ("click".equalsIgnoreCase(action)) {
                         element.click();
@@ -164,32 +160,32 @@ public class SeleniumTestExecutor {
                      
                     String screenshotPath = takeScreenshot(driver, screenshotsDir, "event_" + eventIndex);
                     screenshots.add(screenshotPath);
-                    
+
                 } catch (Exception e) {
                     logger.error("Error executing event {}: {}", event, e.getMessage());
                     executedEvent.put("executed", false);
                     executedEvent.put("error", e.getMessage());
-                    
+
                     // Advanced self-healing attempt using SelfHealingService
                     try {
                         Map<String, Object> healingResult = selfHealingService.getClickableElement(event.getRelativeXpath());
                         WebElement healedElement = (WebElement) healingResult.get("element");
                         boolean elementAutoHealed = (boolean) healingResult.get("autoHealed");
-                        
+
                         if (healedElement != null && elementAutoHealed) {
                             String healedXpath = (String) healingResult.get("healedXpath");
                             // Use the elementAutoHealed variable that was already declared
                             executedEvent.put("autoHealed", true);
                             executedEvent.put("healedXPath", healedXpath);
                             logger.info("Auto-healed XPath from '{}' to '{}'", event.getRelativeXpath(), healedXpath);
-                            
+
                             // Update the class-level autoHealed flag
                             autoHealed = true;
-                            
+
                             // Update the event's XPath with the healed XPath
                             event.setRelativeXpath(healedXpath);
                             event.setAutoHealed(true);
-                            
+
                             if ("click".equalsIgnoreCase(event.getAction())) {
                                 healedElement.click();
                                 executedEvent.put("executed", true);
@@ -198,7 +194,7 @@ public class SeleniumTestExecutor {
                                 healedElement.sendKeys(event.getValue());
                                 executedEvent.put("executed", true);
                             }
-                            
+
                             // Take screenshot after auto-healing
                             String screenshotPath = takeScreenshot(driver, screenshotsDir, "healed_" + eventIndex);
                             screenshots.add(screenshotPath);
@@ -209,22 +205,22 @@ public class SeleniumTestExecutor {
                         executedEvent.put("autoHealingFailed", true);
                     }
                 }
-                
+
                 executedEvents.add(executedEvent);
                 eventIndex++;
             }
-            
+
             // Take final screenshot
             String finalScreenshot = takeScreenshot(driver, screenshotsDir, "final");
             screenshots.add(finalScreenshot);
-            
+
             // Set result
             result.setStatus("SUCCESS");
             result.setAutoHealed(autoHealed); // Using the class-level autoHealed variable
             result.setEventIds(eventIds); // Set the event IDs in the result
             result.setScreenshots(screenshots);
             result.setExecutedEvents(executedEvents);
-            
+
         } catch (Exception e) {
             logger.error("Error executing test case {}: {}", testCaseId, e.getMessage(), e);
             result.setStatus("FAILED");
@@ -242,10 +238,10 @@ public class SeleniumTestExecutor {
                 }
             }
         }
-        
+
         return result;
     }
-    
+
     /**
      * Takes a complete DOM screenshot and saves it to the specified directory
      * Uses AShot library which can capture the entire DOM regardless of viewport size
@@ -256,34 +252,36 @@ public class SeleniumTestExecutor {
      * @return The path to the screenshot
      */
     private String takeScreenshot(WebDriver driver, Path screenshotsDir, String name) throws Exception {
-         
-        String filename = name + "_" + UUID.randomUUID() + ".png";
+
+        String filename = name + ".png";
         Path destination = screenshotsDir.resolve(filename);
-        File outputFile = destination.toFile();
-        
-        try { 
+
+        try {
             Dimension originalSize = driver.manage().window().getSize();
-            try { 
-                driver.manage().window().setSize(new Dimension(1920, 1080));
-                 
-                ru.yandex.qatools.ashot.Screenshot screenshot = new AShot()
-                    .shootingStrategy(ShootingStrategies.viewportPasting(1000)) // Only pass scrollTimeout
-                    .coordsProvider(new WebDriverCoordsProvider())
-                    .takeScreenshot(driver);
-                 
-                ImageIO.write(screenshot.getImage(), "PNG", outputFile);
+            try {
+                Map<String, Object> params = new HashMap<>();
+                params.put("format", "png");
+                params.put("captureBeyondViewport", true);
+                params.put("fromSurface", true);
+
+                Map<String, Object> result = ((ChromeDriver) driver).executeCdpCommand("Page.captureScreenshot", params);
+                String base64EncodedImage = (String) result.get("data");
+
+                byte[] imageBytes = Base64.getDecoder().decode(base64EncodedImage);
+                Files.write(destination, imageBytes);
+
                 return destination.toString();
-            } finally { 
+            } finally {
                 driver.manage().window().setSize(originalSize);
             }
         } catch (Exception e) {
             logger.error("Error taking full DOM screenshot: {}", e.getMessage());
              
             File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-            Files.copy(screenshotFile.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            
+            Files.copy(screenshotFile.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
+
             return destination.toString();
         }
     }
-    
+
 }
