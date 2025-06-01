@@ -46,10 +46,7 @@ dist/
 /springboot-service/*.war
 *.class
 
-# Maven
-/springboot-service/.mvn/
-/springboot-service/mvnw
-/springboot-service/mvnw.cmd
+
 
 # Gradle
 /springboot-service/.gradle/
