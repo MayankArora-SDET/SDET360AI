@@ -1,0 +1,18 @@
+input{
+    border:solid black 2px;
+    border-radius: 4px;
+}
+.logBugHeight {
+    height: calc(100vh - 200px);
+}
+
+
+.wrapper p{
+    background-color: aqua;
+}
+.wrapper > * {
+    flex: 1;  /* Makes each child element take equal space */
+  }
+  .testCaseTitle{
+    background-color: blue;
+  }

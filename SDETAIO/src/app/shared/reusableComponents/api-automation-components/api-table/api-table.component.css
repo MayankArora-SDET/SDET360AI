@@ -1,0 +1,63 @@
+table {
+    width: 100%;
+    border-collapse: collapse;
+    /* Ensures borders don't have double lines */
+    border: 1px solid #ddd;
+    /* Outer border for the entire table */
+}
+
+
+tr {
+    display: flex;
+    justify-content: start;
+    margin-bottom: 0;
+    border-bottom: 1px solid #ddd;
+}
+
+
+
+th {
+    font-weight: 600;
+}
+
+
+th,
+td {
+    text-align: left;
+    padding: 8px;
+    border-right: 1px solid #ddd;
+    min-width: 80px;
+}
+
+th:not(:last-child),
+td:not(:last-child) {
+    flex: 1;
+}
+
+th:last-child,
+td:last-child {
+    width: 100px;
+    border-right: none;
+}
+
+
+
+th {
+    background-color: #f4f4f4;
+    font-weight: 700;
+    font-size: small;
+    border-bottom: 1px solid #ddd;
+}
+
+input {
+    border: none;
+    width: 100%;
+    font-size: small;
+
+}
+
+input:focus {
+    border: none;
+    outline: none;
+
+}

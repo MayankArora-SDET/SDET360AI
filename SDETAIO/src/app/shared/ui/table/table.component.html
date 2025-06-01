@@ -1,0 +1,48 @@
+<div class="flex gap-4">
+    <button (click)="addNewRow()">
+        <mat-icon>library_add</mat-icon>
+    </button>
+</div>
+
+<table *ngIf="columns && data">
+    <thead>
+        <tr>
+            <th *ngFor="let col of columns">{{ col.label }}</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr *ngFor="let row of data; let i = index">
+            <td *ngFor="let col of columns">
+                <ng-container [ngSwitch]="col.key">
+
+                    <!-- Actions Column -->
+                    <ng-container *ngSwitchCase="'actions'">
+                        <!-- New Row: Show only Add -->
+                        <button *ngIf="isNewRow(row)" (click)="saveRow(row)">Add</button>
+                        <!-- <button (click)="deleteNewRow(i)">Delete</button> -->
+
+                        <!-- Edited Row: Show Save -->
+                        <button *ngIf="isEditing(row) && !isNewRow(row)" (click)="saveRow(row)">Save</button>
+
+                        <!-- Default Actions: Edit/Delete -->
+                        <ng-container *ngIf="!isEditing(row) && !isNewRow(row)">
+                            <button (click)="editRow(row)">Edit</button>
+                            <button (click)="deleteRow(i)">Delete</button>
+                        </ng-container>
+                    </ng-container>
+
+                    <!-- Editable Fields -->
+                    <ng-container *ngSwitchDefault>
+                        <input *ngIf="isEditing(row); else rawData" [(ngModel)]="row[col.key]"
+                            class="w-[90%] h-[90%] px-2 py-1 border border-gray-300 rounded" />
+                        <ng-template #rawData>
+                            <p>{{ row[col.key] }}</p>
+                        </ng-template>
+                    </ng-container>
+
+                </ng-container>
+            </td>
+        </tr>
+    </tbody>
+</table>

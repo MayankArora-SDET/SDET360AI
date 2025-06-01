@@ -1,0 +1,52 @@
+::ng-deep .custom-mat-tabs mat-tab-header {
+    display: none !important;
+
+}
+
+.active {
+    background-color: rgba(27, 89, 248, 1);
+    color: white !important;
+    border-radius: 15px;
+    padding: 10px 10px;
+    font-weight: 600;
+
+}
+
+.custom-tab-buttons {
+    display: flex;
+    gap: 20px;
+
+}
+
+.category-card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 1rem;
+
+}
+
+/* .category-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: scale(1.02);
+} */
+
+
+
+
+.card-icon {
+    height: 3rem;
+    width: 3rem;
+}
+
+.card-label {
+    font-weight: 600;
+    color: rgb(23, 37, 84);
+}
+
+
+
+.card-content {
+    font-weight: 400;
+    font-size: 0.875rem;
+    color: rgb(55, 65, 81);
+}

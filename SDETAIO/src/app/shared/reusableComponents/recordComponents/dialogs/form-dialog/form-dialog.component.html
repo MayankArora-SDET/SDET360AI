@@ -1,0 +1,55 @@
+<div class="p-5 " id="formDialogModal">
+    <div class="text-right">
+        <button type="button" class="close" (click)="closeDialog()" aria-label="Close"><span>
+                <i class="fa-regular fa-circle-xmark"></i>
+            </span>
+        </button>
+    </div>
+    <form #editForm="ngForm" (ngSubmit)="onDataSubmit($event,editForm.value)" class="mt-4">
+        <div class="formElement">
+            <label for="action">Action</label>
+            <select [(ngModel)]="savedFormData.action" name="action" id="action">
+                <option *ngFor="let option of actionOptions" [value]="option.value">
+                    {{option.name}}
+                </option>
+            </select>
+
+        </div>
+        <div class="formElement">
+            <label for="type">Input Type</label>
+            <select [(ngModel)]="savedFormData.type=='input'?'text':savedFormData.type" name="type" id="type"
+                onsubmit="">
+                <option *ngFor="let option of inputTypeOptions" [value]="option.value">
+                    {{option.name}}
+                </option>
+            </select>
+
+        </div>
+        <div class="formElement">
+            <label for="relativeXPath">Value</label>
+            <input type="text" id="value" name="value" [(ngModel)]="savedFormData.value" />
+        </div>
+        <div class="formElement">
+            <label for="relativeXPath">Relative Xpath</label>
+            <input type="text" id="relativeXpath" name="relativeXPath" [(ngModel)]="savedFormData.relativeXPath" />
+        </div>
+
+        <div class="formElement">
+            <label for="relationalXPath">Relational Xpath</label>
+            <input type="text" id="relationalXPath" name="relationalXPath"
+                [(ngModel)]="savedFormData.relationalXPath" />
+        </div>
+        <div class="formElement">
+            <label for="absoluteXPath">Absolute Xpath</label>
+            <input type="text" id="absoluteXPath" name="absoluteXPath" [(ngModel)]="savedFormData.absoluteXPath" />
+        </div>
+        <div class="flex items-center">
+
+            <label for="assertion" class="text-sm font-sans font-semibold">Do you want to add assertion to this
+                step?</label>
+            <input type="checkbox" id="assertion" name="assertion" [(ngModel)]="savedFormData.assertion" />
+        </div>
+        <button color="primary" type="submit">Save</button>
+
+    </form>
+</div>

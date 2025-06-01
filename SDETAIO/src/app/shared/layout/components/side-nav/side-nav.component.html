@@ -1,0 +1,90 @@
+<nav class="relative  flex flex-col px-2 h-full">
+    <mat-icon class="text-black block md:visible cursor-pointer mt-4 mb-5" (click)="onMenuIconClick()"
+        aria-label="Toggle menu">
+        {{sideNavExpanded ? 'menu_open' : 'menu' }}
+    </mat-icon>
+    <ul class="flex flex-col gap-[1px]  overflow-y-scroll hideScroll mt-2 flex-grow">
+        <li *ngFor="let menuItem of menuItems; let menuItemIndex = index">
+            <!-- Main Menu Item (No Submenu) -->
+            <a *ngIf="!menuItem.subMenuItems" [routerLink]="menuItem.linkTo" routerLinkActive="active-link"
+                [routerLinkActiveOptions]="{ exact: menuItem.linkTo == '/' }"
+                class="flex gap-2 w-full items-center md:justify-start p-2 rounded-s-md h-15 eachMenuItem">
+
+                <div class="flex-shrink-0">
+                    <img [src]="menuItem.icon" />
+                </div>
+
+                <p class="flex-1 text-left">
+                    {{ menuItem.label }}
+                </p>
+            </a>
+
+            <!-- Main Menu Item with Submenu -->
+            <div *ngIf="menuItem.subMenuItems" class="flex flex-col">
+                <div class="flex flex-row items-center w-full p-2 gap-2 font-semibold">
+                    <!-- Left side: icon + label -->
+                    <img [src]="menuItem.icon" class=" flex-shrink-0" />
+
+                    <div class="flex items-center gap-2 flex-1">
+                        <a class="eachMenuItem flex-1 text-left" [routerLink]="menuItem.linkTo">
+                            {{ menuItem.label }}
+                        </a>
+                        <mat-icon class="text-black text-md cursor-pointer" role="button"
+                            (click)="toggleSubMenu(menuItemIndex)">
+                            {{ menuItem.expanded ? 'expand_less' : 'expand_more' }}
+                        </mat-icon>
+                    </div>
+
+                    <!-- Right side: expand/collapse icon -->
+
+                </div>
+
+
+                <!-- Submenu -->
+                <ul class="flex flex-col gap-[5px] overflow-hidden transition-all duration-160  mt-2 ml-4 w-full "
+                    [ngClass]="{'dropdownExpanded': menuItem.expanded, 'dropdownCollapsed': !menuItem.expanded}">
+                    <li *ngFor="let categoryItem of menuItem.subMenuItems; let categoryIndex = index" class="">
+                        <button class="flex flex-row w-full font-semibold text-left ml-2"
+                            (click)="toggleCategorySubMenu(menuItemIndex, categoryIndex)">
+                            <p class="md:block  eachMenuItem w-3/4">{{ categoryItem.category }}</p>
+                            <mat-icon class="text-[#000000B2] rounded-xl text-md m-auto w-1/4">
+                                {{ categoryItem.expanded ? 'expand_less' : 'expand_more' }}
+                            </mat-icon>
+                        </button>
+
+                        <!-- Subcategory Items -->
+                        <ul class="flex flex-col gap-[5px] overflow-hidden transition-all duration-200  mt-2 ml-4 w-full"
+                            [ngClass]="{'dropdownExpanded': categoryItem.expanded, 'dropdownCollapsed': !categoryItem.expanded}">
+                            <li *ngFor="let eachCategoryItem of categoryItem.items"
+                                class="font-medium flex-col gap-3  text-sm  pl-2">
+                                <a *ngIf="!eachCategoryItem.isExternal" [routerLink]="eachCategoryItem.linkTo"
+                                    routerLinkActive="active-link" [routerLinkActiveOptions]="{exact:false}"
+                                    class="flex gap-2 items-center p-[2px]">
+                                    <p>{{ eachCategoryItem.label }}
+                                    </p>
+                                </a>
+                                <a *ngIf="eachCategoryItem.isExternal" [href]="eachCategoryItem.linkTo" target="_blank"
+                                    [ngClass]="{'active-link':'isActive(eachCategoryItem.linkTo)'}">
+                                    <p>{{ eachCategoryItem.label }}
+                                    </p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    </ul>
+    <div class="py-3 flex flex-col gap-1 border-solid border-gray-500 border-t-[2px]">
+        <div class="w-10 h-10 bg-[#1b59f8] text-white rounded-full flex justify-center items-center">
+            <p class="font-bold text-2xl ">{{this.userdetails.username[0]}}</p>
+        </div>
+        <p class="font-semibold text-sm">
+            {{ userdetails.username }}
+            <span *ngIf="!userdetails.username">&nbsp;</span>
+        </p>
+        <p class="text-xs text-gray-700">{{this.userdetails.email}}
+            <span *ngIf="!userdetails.email">&nbsp;</span>
+        </p>
+    </div>
+</nav>

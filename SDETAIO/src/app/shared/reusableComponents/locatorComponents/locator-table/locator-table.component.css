@@ -1,0 +1,32 @@
+table {
+    width: 100%;
+    border-collapse: collapse;
+    /* Ensures borders don't have double lines */
+    border: 1px solid #ddd;
+    /* Outer border for the entire table */
+}
+
+td {
+    flex: 1;
+    width: 50%;
+    font-size: small;
+
+}
+
+th {
+    background-color: #f4f4f4;
+    font-weight: 700;
+    border-bottom: 1px solid #ddd;
+    flex: 1;
+    width: 50%;
+}
+
+th,
+td {
+
+    border-bottom: solid 1px #ddd;
+    padding: 4px;
+    border-right: solid 1px #ddd;
+    padding-left: 10px;
+
+}

@@ -1,0 +1,60 @@
+<div class="p-5 ">
+    <div class="flex flex-col gap-5">
+
+        <div class="sm:flex gap-5">
+            <div class="flex-1 flex flex-col gap-2">
+                <label for="sessionUrl" class="font-semibold mr-1 ">Enter URL to record session :</label>
+                <input type="text" id="sessionUrl" [(ngModel)]="sessionUrl" placeholder="Enter the URL"
+                    class="w-full" />
+
+            </div>
+            <div class="flex-1 flex flex-col gap-2">
+                <label for="testCaseId" class="font-semibold mr-1">Enter Test Case Id :</label>
+
+                <input type="text" id="testCaseId" placeholder="Enter Test Case Id" [(ngModel)]="testCaseId"
+                    class="w-full" />
+            </div>
+        </div>
+
+        <div class="sm:flex gap-5">
+            <div class="flex-1 flex flex-col gap-2">
+                <label for="category" class="font-semibold mr-1">Select Category :</label>
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-select [(ngModel)]="category" placeholder="Select Category">
+                        <mat-option *ngFor="let cat of categories" [value]="cat">
+                            {{ cat }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-icon matSuffix>category</mat-icon>
+                </mat-form-field>
+            </div>
+            <div class="flex-1 flex flex-col gap-2">
+                <label for="description" class="font-semibold mr-1">Enter Description :</label>
+                <textarea [(ngModel)]="description" placeholder="Enter Description" class="w-full"></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="flex gap-5 mb-5">
+        <button (click)="recordSession()" class="text-white font-semibold bg-blue-800 p-1 rounded-md mt-5">Get Token to
+            start
+            Recording
+            <div class="w-2 h-2 bg-red-400 inline-block rounded-lg "></div>
+        </button>
+        <div>
+            <div class="tooltip mt-5">
+                <button (click)=" copyToClipBoard()" (mouseout)="outFunc()"
+                    class="text-sm bg-blue-900 text-white p-2 font-semibold rounded-md"
+                    [ngClass]="{'opacity-50 cursor-not-allowed':webTokenForUrl.length==0}">
+                    <span class="tooltiptext" id="myTooltip" #tokenText *ngIf="webTokenForUrl.length>0">Copy Web token
+                    </span>
+                    Copy Token
+                </button>
+            </div>
+        </div>
+    </div>
+    <small class="font-mono font-semibold text-black " *ngIf="webTokenForUrl.length>0" #infoTag>Copy the
+        token
+        and
+        paste it in extension to start
+        recording</small>
+</div>

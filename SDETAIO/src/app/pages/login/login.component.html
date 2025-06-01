@@ -1,0 +1,38 @@
+<div class="w-screen h-screen  flex justify-center items-center bg-[#00000027]  ">
+    <div class="w-[90%] min-w-[500px]  h-[550px] flex bg-white rounded-md ">
+        <div class="w-1/2 bg-white h-full ">
+            <app-carousel [sliderConfig]="sliderConfig" [slides]="slides"></app-carousel>
+        </div>
+        <div class="w-1/2 p-2  h-full ml-5 mt-5">
+            <img src="/assets/sdetLogo.png" alt="SDET360.AI Logo" width="200" height="100" class="mb-3" />
+
+            <!-- <hr class="border-t-2 border-black w-[80%] my-5" /> -->
+            <h3 class="font-bold font-sans ">Welcome Back SDET</h3>
+            <form class="mt-10  flex flex-col gap-10" #loginForm="ngForm" (ngSubmit)="onSubmit($event,loginForm.value)">
+                <div>
+                    <label for="email" class="text-sm font-semibold block">Email</label>
+                    <input type="text" class="inputBox w-[80%] mt-2" id="email" name="email"
+                        (input)="onInputChange($event)" ngModel required>
+                </div>
+                <div>
+                    <label for="password" class="text-sm  font-semibold block">Password</label>
+                    <input type="password" id="password" name="password" class=" w-[80%] mt-2"
+                        (input)="onInputChange($event)" ngModel required>
+                </div>
+                <button type="submit"
+                    class="w-fit bg-[#1B59F8] text-white font-semibold py-2 px-6 rounded-lg ">Submit</button>
+            </form>
+            <!-- <button (click)="onMicrosoftLoginClick()"
+                class="w-auto border-solid border-gray-500 border-[2px] mt-4 rounded-sm p-1 my-auto text-sm font-semibold flex gap-2"><span>
+                    <img src="assets/microsoftLogo.svg" width="20" height="20" class="my-auto" /> </span>
+                <span>Continue with Microsoft</span></button>
+ -->
+
+
+        </div>
+
+
+    </div>
+
+
+</div>

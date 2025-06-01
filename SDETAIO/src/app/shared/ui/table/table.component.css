@@ -1,0 +1,111 @@
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+thead {
+    background-color: #f4f6f8;
+}
+
+th,
+td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #eaeaea;
+}
+
+th {
+    font-weight: 600;
+    color: #333;
+    text-transform: uppercase;
+    font-size: 13px;
+}
+
+tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+td button {
+    margin-right: 8px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+td button.edit {
+    background-color: #007bff;
+    color: white;
+}
+
+td button.delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+td button.save {
+    background-color: #28a745;
+    color: white;
+}
+
+td button.cancel {
+    background-color: #6c757d;
+    color: white;
+}
+
+@media (max-width: 768px) {
+
+    table,
+    thead,
+    tbody,
+    th,
+    td,
+    tr {
+        display: block;
+    }
+
+    thead {
+        display: none;
+    }
+
+    tr {
+        margin-bottom: 12px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 8px;
+    }
+
+    td {
+        position: relative;
+        padding-left: 50%;
+        border: none;
+        border-bottom: 1px solid #eee;
+    }
+
+    td::before {
+        position: absolute;
+        top: 12px;
+        left: 16px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: bold;
+        content: attr(data-label);
+        color: #666;
+    }
+
+    td:last-child {
+        border-bottom: none;
+    }
+}

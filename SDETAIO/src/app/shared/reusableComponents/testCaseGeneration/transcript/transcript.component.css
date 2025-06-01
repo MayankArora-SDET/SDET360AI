@@ -1,0 +1,13 @@
+ ul{
+    list-style-type: circle;
+}
+
+ ol{
+    list-style: decimal;
+}
+
+.responseBorder{
+    border:solid rgb(191, 191, 191) 2px;
+    border-radius: 6px;
+    padding: 10px;
+}

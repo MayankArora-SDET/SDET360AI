@@ -1,0 +1,16 @@
+<div class="flex w-full justify-between items-center ">
+    <h1 class="text-lg font-semibold text-center  mb-8 tracking-wide ">{{title}}
+    </h1>
+    <div class="max-w-[400px] flex gap-2 items-center">
+        <label for="category" class="font-semibold mr-1">Choose a Project:</label>
+        <mat-form-field appearance="fill">
+            <!-- <mat-label>Select a project</mat-label> -->
+            <mat-select [value]="selectedVertical" (selectionChange)="onVerticalChange($event)" class="uppercase">
+                <mat-option *ngFor="let vertical of verticalsList" [value]="vertical" class="uppercase">
+                    {{ vertical }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+
+    </div>
+</div>

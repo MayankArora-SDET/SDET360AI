@@ -1,0 +1,19 @@
+<h4 *ngIf="router.url=='/analytics'">
+    <h2 class="font-semibold text-center text-2xl">Analytics</h2>
+
+</h4>
+<div *ngIf="renderChart==true" class="grid lg:grid-cols-2 grid-cols-1 gap-4">
+
+    <app-pie-chart [labels]="getObjectKeys(statusCounts)" [values]="getObjectValues(statusCounts)"
+        [chartId]="'Status chart'"></app-pie-chart>
+    <app-pie-chart [labels]="getObjectKeys(testCaseResultCounts)" [values]="getObjectValues(testCaseResultCounts)"
+        [chartId]="'Test Case Chart'"></app-pie-chart>
+    <app-pie-chart [labels]="getObjectKeys(bugCounts)" [values]="getObjectValues(bugCounts)"
+        [chartId]="'Bug chart'"></app-pie-chart>
+    <app-pie-chart [labels]="getObjectKeys(executionStatusCounts)" [values]="getObjectValues(executionStatusCounts)"
+        [chartId]="'Automation chart'"></app-pie-chart>
+</div>
+<div *ngIf="renderChart==false" class="flex justify-center mt-5">
+    <img src="assets/svg_loader.svg" class="animate-spin w-5 h-5" />
+
+</div>

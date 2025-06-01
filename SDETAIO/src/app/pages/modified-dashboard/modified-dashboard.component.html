@@ -1,0 +1,109 @@
+
+<body class="flex justify-center">
+  <div class="container  px-2 py-8">
+    <h1 class="text-2xl font-semibold text-center text-gray-800 mb-8 tracking-wide">Project Health Report</h1>
+    
+    <!-- First Row: 2 Pie charts -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+      <div class=" p-4">
+        <app-pie-chart-with-legends
+          title="Test Case Execution Status"
+          [data]="testExecutionStatusData"
+          [colorScheme]="testExecutionStatusColorScheme"
+          [view]="[300, 250]">
+        </app-pie-chart-with-legends>
+      </div>
+      
+      <div class="p-4">
+        <app-pie-chart-with-legends
+          title="Test Case Status"
+          [data]="testCaseStatus"
+          [colorScheme]="statusColorScheme"
+          [view]="[300, 250]">
+        </app-pie-chart-with-legends>
+      </div>
+      
+      <div class="p-4 xl:block hidden">
+        <app-pie-chart-with-legends
+          title="Automation Task Status"
+          [data]="automationTestStatus"
+          [colorScheme]="automationStatusColorScheme"
+          [view]="[300, 250]">
+        </app-pie-chart-with-legends>
+      </div>
+    </div>
+    
+    <!-- Second Row: Line Chart (2 cols) and Pie Chart (1 col) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class=" p-4 lg:col-span-2">
+        <app-line-chart
+          chartTitle="Test Case Execution Over Time"
+          [chartData]="testExecutionOverTimeData"
+          [colorScheme]="testExecutionColorScheme"
+          xAxisLabel="Sprint Cycle"
+          yAxisLabel="Number of Test Cases"
+          [view]="[900, 315]">
+        </app-line-chart>
+      </div>
+      
+      <div class= " p-4 xl:hidden block">
+        <app-pie-chart-with-legends
+          title="Automation Task Status"
+          [data]="automationTestStatus"
+          [colorScheme]="automationStatusColorScheme"
+          [view]="[300, 250]">
+        </app-pie-chart-with-legends>
+      </div>
+      
+      <div class="p-4">
+        <app-pie-chart-with-legends
+          title="Defects by Priority"
+          [data]="defectsByPriorityData"
+          [colorScheme]="defectPriorityColorScheme"
+          [view]="[300, 315]">
+        </app-pie-chart-with-legends>
+      </div>
+    </div>
+    
+    <!-- Third Row: Bar Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="p-4">
+        <app-bar-chart
+          chartTitle="Stories and Epics Progress"
+          [chartData]="storiesAndEpicsData"
+          [colorScheme]="barChartColorScheme"
+          xAxisLabel="Status"
+          yAxisLabel="Count"
+          [view]="[500, 300]">
+        </app-bar-chart>
+      </div>
+      
+      <div class=" p-4">
+        <app-bar-chart
+          chartTitle="Unresolved Bugs by Priority"
+          [chartData]="bugPriorityData"
+          [colorScheme]="bugPriorityColorScheme"
+          xAxisLabel="Priority"
+          yAxisLabel="Count"
+          [showLegend]="false"
+          [view]="[500, 300]">
+        </app-bar-chart>
+      </div>
+    </div>
+    
+    <!-- Fourth Row: Unresolved Bugs Bar Chart -->
+    <div class="grid grid-cols-1 gap-6">
+      <div class=" p-4">
+        
+        <app-bar-chart
+          chartTitle="Test Case Progress by Labels"
+          [chartData]="testCaseProgressByLabelsBarData"
+          [colorScheme]="testCaseProgressColorScheme"
+          xAxisLabel="Label"
+          yAxisLabel="Count"
+          [view]="[1000, 500]">
+        </app-bar-chart>
+      </div>
+    </div>
+  </div>
+</body>

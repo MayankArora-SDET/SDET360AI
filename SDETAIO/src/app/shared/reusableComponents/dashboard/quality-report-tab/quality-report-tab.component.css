@@ -1,0 +1,21 @@
+/* epic-table.component.css */
+table {
+    width: 100%;
+}
+
+th.mat-header-cell,
+td.mat-cell {
+    padding: 8px;
+
+}
+
+.tableTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e3e88;
+    margin-bottom: 10px;
+    font-family: sans-serif;
+    border-bottom: 2px solid #1e3e88;
+
+
+}

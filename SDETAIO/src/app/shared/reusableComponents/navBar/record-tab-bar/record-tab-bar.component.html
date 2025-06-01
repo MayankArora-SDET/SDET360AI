@@ -1,0 +1,6 @@
+<nav class="flex w-full justify-center text-center">
+    <a *ngFor="let tab of tabSections" [routerLink]="tab.linkTo" routerLinkActive="active-link"
+        class="flex-1 gap-2  font-semibold  md:justify-start  text-gray-400  p-2 border-solid border-gray-300 border-b-[2px]">
+        {{ tab.label }}
+    </a>
+</nav>

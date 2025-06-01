@@ -1,0 +1,60 @@
+<div class="modal fade my-modal" tabindex="-1" role="dialog" #myModal>
+    <div class="modal-dialog flex justify-center items-center h-screen">
+        <div class="modal-content max-w-[500px] w-[60%] h-[500px] rounded-md bg-white p-5">
+            <div class="text-right">
+                <button type="button" class="close" (click)="close()" aria-label="Close"><span aria-hidden="true">
+                        <i class="fa-regular fa-circle-xmark"></i>
+                    </span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <form #editForm="ngForm" (ngSubmit)="onDataSubmit($event,editForm.value)" class="mt-4"
+                    *ngIf="displayAction=='form'">
+                    <div class="formElement">
+                        <label for="action">Action</label>
+                        <select [(ngModel)]="savedFormData.action" name="action" id="action">
+                            <option *ngFor="let option of actionOptions" [value]="option.value">
+                                {{option.name}}
+                            </option>
+                        </select>
+
+                    </div>
+                    <div class="formElement">
+                        <label for="inputType">Input Type</label>
+                        <select [(ngModel)]="savedFormData.type" name="inputType" id="inputType" onsubmit="">
+                            <option *ngFor="let option of inputTypeOptions" [value]="option.value">
+                                {{option.name}}
+                            </option>
+                        </select>
+
+                    </div>
+                    <div class="formElement">
+                        <label for="relative_xpath">Value</label>
+                        <input type="text" id="value" name="value" [(ngModel)]="savedFormData.value" />
+                    </div>
+                    <div class="formElement">
+                        <label for="relative_xpath">Relative Xpath</label>
+                        <input type="text" id="relativeXpath" name="relative_xpath"
+                            [(ngModel)]="savedFormData.relativeXPath" />
+                    </div>
+
+                    <div class="formElement">
+                        <label for="relational_xpath">Relational Xpath</label>
+                        <input type="text" id="relational_xpath" name="relational_xpath"
+                            [(ngModel)]="savedFormData.relationalXPath" />
+                    </div>
+                    <div class="formElement">
+                        <label for="absolute_xpath">Absolute Xpath</label>
+                        <input type="text" id="absolute_xpath" name="absolute_xpath"
+                            [(ngModel)]="savedFormData.absoluteXPath" />
+                    </div>
+
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>

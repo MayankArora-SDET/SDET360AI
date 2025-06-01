@@ -1,0 +1,40 @@
+<div class="p-1 ">
+    <!-- <app-tab-bar [tabList]="tabSections" (emitTab)="onTabSectionClicked($event)"></app-tab-bar> -->
+
+    <div
+        class=" border-dotted border-black border-[2px] h-[180px] w-[70%] flex flex-col justify-center items-center mt-4 m-auto ">
+        <div class="flex-1  flex flex-col items-center ">
+            <h4 class="font-semibold font-mono text-blue-950 text-md  ">Browse files here</h4>
+            <small class="">Supported files:PDF, TEXT, DOC, DOCX</small>
+        </div>
+        <div class="flex-1 justify-center flex">
+            <input type="file" class="file-input" (change)="onFileSelected($event)" #fileUpload class="hidden">
+            <div class="flex flex-col gap-0.5 items-center">
+                <button mat-mini-fab color="primary"
+                    class="flex gap-2 bg-[#1B59F8] p-2 rounded-md text-white font-semibold"
+                    (click)="fileUpload.click()">
+                    Upload file
+                    <img src="assets/upload-file.svg" w="20" h="20" class="w-5 h-5" />
+                </button>
+                <small *ngIf="selectedFileName" class=" w-auto"> {{selectedFileName}}</small>
+            </div>
+        </div>
+        <button class="p-1 px-2 mb-2 bg-black text-white rounded-md" (click)="generateData()"
+            [disabled]="isLoading?true:false" [ngClass]="{'opacity-50':isLoading}">Generate</button>
+    </div>
+
+    <div class=" mt-5 mb-5 ">
+        <div *ngIf="isLoading" class="flex justify-center items-center gap-5 ">
+            <app-animation-ping></app-animation-ping>
+            <p class="text-xs text-gray-600 text-center">{{tabHeadings[activeTab]}}</p>
+        </div>
+        <div *ngIf="transcriptData.length>0">
+            <markdown [data]="transcriptData"></markdown>
+        </div>
+        <div *ngIf="errorResponse" class="font-semibold text-red-700 font-mono text-center">
+
+            {{errorResponse}}
+        </div>
+
+    </div>
+</div>

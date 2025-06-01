@@ -1,0 +1,17 @@
+input {
+    background-color: rgba(219, 222, 222, 0.643);
+    padding: 8px;
+}
+
+input:focus {
+    outline: 0px;
+}
+
+input:focus-visible {
+    outline: solid rgb(87, 85, 85) 2px;
+    outline-offset: 3px;
+}
+
+label {
+    color: #000000B2;
+}

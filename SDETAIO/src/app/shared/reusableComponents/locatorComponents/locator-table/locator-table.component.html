@@ -1,0 +1,21 @@
+<div *ngIf="locatorArray.length > 0;else noLocatorData">
+    <table>
+        <thead>
+            <tr>
+                <th *ngFor="let column of columnLabels">{{column}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let eachLocator of locatorArray">
+                <td>{{eachLocator[0]}}</td>
+                <td>{{eachLocator[1]}}</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+<ng-template #noLocatorData>
+    <p class="font-medium  text-sm p-1 mt-5 inline-block">
+        No locators are available for this DOM.
+    </p>
+</ng-template>

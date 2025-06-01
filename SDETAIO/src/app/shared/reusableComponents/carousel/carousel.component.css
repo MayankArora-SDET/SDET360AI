@@ -1,0 +1,7 @@
+.visibile {
+    visibility: visible !important;
+}
+
+.hidden {
+    visibility: hidden;
+}

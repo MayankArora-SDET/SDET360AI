@@ -1,0 +1,59 @@
+<div class="chart-container">
+  <div class="chart-header">
+    <div class="title-container">
+      <h2 class="chart-title">{{ chartTitle }}</h2>
+    </div>
+  </div>
+  
+  <div class="total-container" *ngIf="totalTestCases > 0 && showTotalTestCases">
+    <div class="total-test-cases">
+      {{ totalHeading }}: <span class="test-count">{{ totalTestCases }}</span>
+    </div>
+  </div>
+  
+  <ng-container *ngIf="chartData && chartData.length > 0 && chartData[0].series">
+    <ngx-charts-bar-vertical-2d
+      [view]="view"
+      [scheme]="colorScheme"
+      [results]="chartData"
+      [gradient]="gradient"
+      [yAxis]="showYAxis"
+      [xAxis]="showXAxis"
+      [legend]="showLegend"
+      [legendPosition]="legendPosition"
+      [showXAxisLabel]="showXAxisLabel"
+      [showYAxisLabel]="showYAxisLabel"
+      [xAxisLabel]="xAxisLabel"
+      [yAxisLabel]="yAxisLabel"
+      [barPadding]="barPadding"
+      [showDataLabel]="showDataLabels"
+      [xAxisTickFormatting]="xAxisTickFormatting"
+      [yAxisTickFormatting]="yAxisTickFormatting"
+      (window:resize)="onResize($event)">
+    </ngx-charts-bar-vertical-2d>
+  </ng-container>
+  
+  <ng-container *ngIf="chartData && chartData.length > 0 && !chartData[0].series">
+    <ngx-charts-bar-vertical
+      [view]="view"
+      [scheme]="colorScheme"
+      [results]="chartData"
+      [gradient]="gradient"
+      [xAxis]="showXAxis"
+      [yAxis]="showYAxis"
+      [legend]="showLegend"
+      [legendPosition]="legendPosition"
+      [showXAxisLabel]="showXAxisLabel"
+      [showYAxisLabel]="showYAxisLabel"
+      [xAxisLabel]="xAxisLabel"
+      [yAxisLabel]="yAxisLabel"
+      [barPadding]="barPadding"
+      [showDataLabel]="showDataLabels"
+      [xAxisTickFormatting]="xAxisTickFormatting"
+      [yAxisTickFormatting]="yAxisTickFormatting"
+      (window:resize)="onResize($event)">
+    </ngx-charts-bar-vertical>
+  </ng-container>
+  
+  <div *ngIf="testResults" class="test-results">{{ testResults }}</div>
+</div>

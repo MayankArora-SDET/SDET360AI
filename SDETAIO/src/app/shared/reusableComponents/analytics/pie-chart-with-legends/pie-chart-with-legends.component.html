@@ -1,0 +1,34 @@
+<div class="chart-container">
+  <div class="chart-header">
+    <h3>{{ title }}</h3>
+  </div>
+
+  <div class="chart-and-legend">
+    <div class="chart-area">
+      <ngx-charts-pie-chart
+        [view]="view"
+        [results]="data"
+        [scheme]="colorScheme"
+        [labels]="false"
+        [doughnut]="true"
+        [legend]="false"
+        [arcWidth]="0.3"
+        [gradient]="false"
+        [tooltipDisabled]="false">
+      </ngx-charts-pie-chart>
+    </div>
+
+    <div class="custom-legend">
+      <div *ngFor="let item of data" class="legend-item">
+        <div class="legend-color" [style.background-color]="getColorForItem(item.name)"></div>
+        <div class="legend-details">
+          <span class="legend-name">{{ item.name }}</span>
+          <span class="legend-value">{{ item.value }} ({{ getPercentage(item.value) }}%)</span>
+        </div>
+      </div>
+      <div class="legend-total">
+        <strong>Total: {{ getTotalValue() }}</strong>
+      </div>
+    </div>
+  </div>
+</div>

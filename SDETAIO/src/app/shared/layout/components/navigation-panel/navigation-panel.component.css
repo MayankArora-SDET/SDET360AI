@@ -1,0 +1,39 @@
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: white;
+    z-index: 1000;
+}
+
+.sideNav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    transition: all 0.3s ease-in-out;
+}
+
+.sideMenuExpanded {
+    width: 250px;
+}
+
+.sideMenuCollapsed {
+    width: 0;
+    overflow: hidden;
+}
+
+.maincontent {
+    padding-top: 70px;
+    margin-left: 0;
+    height: 100vh;
+    transition: margin 0.3s ease-in-out;
+    overflow: auto;
+    background-color: #efefef;
+}
+
+.maincontent.expanded {
+    margin-left: 250px;
+}

@@ -1,0 +1,17 @@
+ <div class="chart-container">
+  <div class="chart-header">
+    <h3>{{ title }}</h3>
+  </div>
+  <ngx-charts-pie-chart
+    [view]="view"
+    [results]="data"
+    [scheme]="colorScheme"
+    [legend]="showLegend"
+    [labels]="showLabels"
+    [labelFormatting]="labelFormat"
+    [doughnut]="isDoughnut"
+    [animations]="animations"
+    [arcWidth]="0.6"
+    [explodeSlices]="false">
+  </ngx-charts-pie-chart>
+</div>

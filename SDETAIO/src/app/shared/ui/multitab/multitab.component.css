@@ -1,0 +1,44 @@
+::ng-deep .mat-tab-label.mat-tab-label-active {
+    font-weight: bold;
+    color: #1976d2;
+    /* Customize color */
+    background-color: #e3f2fd;
+    /* Light blue background */
+    border-radius: 8px;
+}
+
+::ng-deep .mat-tab-label-container {
+    border-bottom-style: none !important;
+}
+
+::ng-deep .mat-tab-group {
+    border-bottom: none !important;
+}
+
+::ng-deep .mat-tab-header {
+    border-bottom: none !important;
+    box-shadow: none !important;
+    /* Optional: removes shadow if any */
+}
+
+::ng-deep .mat-tab-body {
+    transition: none !important;
+    /* Disables default slide transition */
+}
+
+::ng-deep .custom-mat-tabs mat-tab-header {
+    display: none !important;
+
+}
+
+.custom-tab-buttons {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.active {
+    background-color: black;
+    color: white;
+    border-radius: 12px;
+}

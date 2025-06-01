@@ -1,0 +1,55 @@
+<div ngSkipHydration class="flex flex-col hideScroll" [ngClass]="{
+    'standaloneHeight': componentType === 'chatBox',
+    'tabHeight': componentType === 'locatorsCreation'|| componentType === 'exploratoryTesting',
+    'codeGeneratorWithTextHeight': componentType === 'codeGeneratorWithText'
+  }">
+
+    <div class="flex-grow overflow-y-scroll hideScroll">
+        <div class="w-full">
+            <div *ngIf="showSamplePrompts&&chatList.length==0&&isLoading==false&& componentType=='chatBox'">
+                <div class="flex lg:flex-row flex-col gap-8 mt-5">
+                    <div *ngFor=" let prompt of randomPrompts"
+                        class="font-medium flex-1 shadow-md bg-gray-100 text-[13px] p-4 leading-5 rounded-md cursor-pointer"
+                        (click)="onPromptClick(prompt)">
+                        <p>{{prompt}}</p>
+
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-y-scroll hideScroll pb-2 " #promptBox>
+                <div class="mx-3 pt-3 ">
+                    <div *ngFor="let chat of chatList" class="p-2 ">
+                        <app-box-layout [boxType]="'prompt'" [componentType]="componentType" [data]="chat.prompt"
+                            class="mb-1"></app-box-layout>
+                        <div *ngIf="isLoading && chat['response'] === 'Loading...'; else responseTemplate"
+                            class="mb-5 mt-4">
+                            <app-animation-pulse></app-animation-pulse>
+
+                        </div>
+                        <ng-template #responseTemplate>
+                            <app-box-layout [boxType]="'response'" [componentType]="componentType"
+                                [data]="chat.response" class="mb-1"></app-box-layout>
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="h-[70px] flex-grow-0 relative flex items-center">
+        <textarea #chatInputBox
+            class="shadow-md w-full pt-1 pl-2 rounded-md pr-12 ml-2 h-[50px] bg-[#ffffff] focus:outline-none text-sm"
+            (input)="onTextInput()" (keydown.enter)="onEnterClick($event, chatInputBox)" [(ngModel)]="promptEntered"
+            placeholder="Enter prompt here">
+  </textarea>
+
+        <!-- Send button positioned to the right of textarea, vertically centered -->
+        <div class="absolute right-4 top-1/2 -translate-y-1/2">
+            <button (click)="getResponse(promptEntered)" [disabled]="isLoading" [ngClass]="{ 'opacity-50': isLoading }">
+                <img src="/assets/submitButton.png" class="w-[30px] h-[30px]" />
+            </button>
+        </div>
+    </div>
+
+</div>

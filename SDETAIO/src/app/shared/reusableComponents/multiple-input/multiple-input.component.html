@@ -1,0 +1,12 @@
+<div class="w-full h-auto">
+    <input type="text" id="ticket" class="w-full  p-1 text-xs h-10" (keyup.enter)="inputEnterClick()"
+        [(ngModel)]="ticketEntered" placeholder="Enter ticket and click enter to add in list" />
+    <ul class="flex flex-wrap  gap-4 mt-4 text-sm rounded-md h-auto">
+        <li class="bg-zinc-200  flex gap-2 p-2 rounded-sm " *ngFor="let ticket of ticketList">
+            <div>
+                {{ticket}}
+            </div>
+            <button (click)="crossClick(ticket)" class="font-semibold">x</button>
+        </li>
+    </ul>
+</div>

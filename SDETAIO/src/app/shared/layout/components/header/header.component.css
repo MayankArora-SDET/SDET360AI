@@ -1,0 +1,20 @@
+.visibile {
+    visibility: visible !important;
+}
+
+.hidden {
+    visibility: hidden;
+}
+
+.profileFont {
+    font-weight: 600;
+}
+
+header {
+    background-color: #F9F9F9;
+}
+
+.Border {
+    border-bottom: solid rgb(197, 197, 205) 2px;
+
+}

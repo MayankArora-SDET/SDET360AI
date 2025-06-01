@@ -1,0 +1,12 @@
+<div class="flex flex-col gap-5 ">
+    <app-dashboard-header class="mt-4" title="Quality Report"></app-dashboard-header>
+    <h2 class="tableTitle">Release Test Coverage Chart</h2>
+    <app-table *ngIf="testCoverageData" [columnsToDisplay]="testCoverageColumns" [rowdata]="testCoverageData"
+        (addRowEvent)="addNewTestCoverageData($event)" (editRowEvent)="editTestCoverageData($event)"
+        (deleteRowEvent)="deleteTestCoverageData($event)"></app-table>
+    <!-- <app-table [columnsToDisplay]="sampleColumns" [data]="sampleData" (addRowEvent)="addSampleRow($event)"></app-table> -->
+    <h2 class="tableTitle">Quality Objective and Status</h2>
+    <app-table [columnsToDisplay]="qualityObjectiveColumns" [rowdata]="qualityObjectiveData"
+        (addRowEvent)="addQualityObjectiveData($event)" (editRowEvent)="editQualityObjectiveData($event)"
+        (deleteRowEvent)="deleteQualityObjectiveData($event)"></app-table>
+</div>

@@ -1,0 +1,28 @@
+<div
+  class="alert-popup fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md flex flex-col z-50">
+  <div class="alert-header flex items-start mb-4 w-full">
+    <div class="icon-container flex items-center justify-center p-2 rounded-full flex-shrink-0">
+      <mat-icon *ngIf="messageType === 'success'" class="text-green-600 bg-green-100">check_circle</mat-icon>
+      <mat-icon *ngIf="messageType === 'warning'" class="text-yellow-600 bg-yellow-100">warning</mat-icon>
+      <mat-icon *ngIf="messageType === 'error'" class="text-red-600 bg-red-100">error</mat-icon>
+    </div>
+
+    <div class="alert-content flex-grow ml-3">
+      <div class="alert-message text-gray-700 font-medium leading-relaxed">{{ message }}</div>
+    </div>
+
+    <button
+      class="close-button bg-transparent border-none cursor-pointer text-gray-400 transition-colors duration-200 ease-in-out p-1 ml-2 flex items-center justify-center hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+      (click)="closeDialog()" (keydown.enter)="closeDialog()" aria-label="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="button-container flex justify-end mt-6 w-full">
+    <button
+      class="ok-button py-2 px-5 bg-blue-700 text-white rounded-md font-medium cursor-pointer transition-all duration-200 ease-in-out shadow-md hover:bg-blue-600 active:translate-y-0 active:shadow-sm focus:outline-none focus:ring-3 focus:ring-blue-400"
+      (click)="onOkClick()">
+      OK
+    </button>
+  </div>
+</div>

@@ -1,0 +1,9 @@
+<ngx-slick-carousel class="carousel w-full h-[100%] hidden" #slickModal="slick-carousel" [config]="sliderConfig"
+    [ngClass]="render?'visibile':'hidden'">
+    <div *ngFor="let slide of slides">
+        <div class="slide" ngxSlickItem>
+            <img src="{{ slide.img }}" alt="" class="h-[542px] rounded-mdl">
+            <p class=" bg-[#cfcbe7da] w-[350px] p-5 absolute bottom-10 font-semibold">{{slide.description}}</p>
+        </div>
+    </div>
+</ngx-slick-carousel>

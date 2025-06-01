@@ -1,0 +1,22 @@
+.recordDataCard :hover {
+    border-left: 1px solid blue;
+    background-color: aquamarine;
+}
+::ng-deep .category-menu {
+  min-width: 180px !important;
+}
+
+::ng-deep .mat-mdc-menu-item {
+  height: 40px !important;
+}
+
+::ng-deep .mat-mdc-menu-panel {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+.category-line {
+  flex-grow: 1;
+  height: 2px;
+  background-image: linear-gradient(to right, rgb(132, 97, 203), rgb(199, 128, 90));
+}

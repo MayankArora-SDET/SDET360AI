@@ -1,0 +1,29 @@
+<div class="custom-tab-buttons">
+    <button *ngFor="let tab of tabs; let i = index" (click)="selectedIndex = i" [class.active]="selectedIndex === i"
+        class="font-semibold text-sm">
+        {{ tab.label }}
+    </button>
+</div>
+
+<div class="mt-5">
+    <mat-tab-group animationDuration="0ms" [selectedIndex]="selectedIndex" class="custom-mat-tabs">
+        <mat-tab [label]="tab.label" *ngFor="let tab of tabs">
+            <div class="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6 cursor-pointer">
+
+                <div *ngFor="let eachCard of tab.data" class="category-card ">
+                    <div (click)="onCardClick(eachCard)">
+                        <div class="mb-4 flex gap-4 items-center ">
+                            <img [src]="'assets/' + eachCard.icon" class="card-icon" />
+                            <h4 class="card-label">{{eachCard.label}}</h4>
+                        </div>
+                        <p class="card-content">{{eachCard.content}}</p>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </mat-tab>
+
+    </mat-tab-group>
+</div>

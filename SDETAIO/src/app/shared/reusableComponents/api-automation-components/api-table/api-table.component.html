@@ -1,0 +1,38 @@
+<div>
+    <table *ngIf="selectedInfoType == 'params' || selectedInfoType == 'headers'" class="bg-white">
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Value</th>
+                <th>Description</th>
+                <th>Edit</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <tr *ngFor="let row of urlData[selectedInfoType];let i =index">
+                <td>
+                    <input type="text" [(ngModel)]="urlData[selectedInfoType][i].key" id="key" placeholder="Key"
+                        (input)="onInputChange(i)" />
+                </td>
+                <td>
+                    <input type="text" [(ngModel)]="urlData[selectedInfoType][i].value" id="value" placeholder="Value"
+                        (input)="onInputChange(i)" />
+                </td>
+                <td>
+                    <input type="text" [(ngModel)]="urlData[selectedInfoType][i].description" id="description"
+                        placeholder="Description" (input)="onInputChange(i)" />
+                </td>
+
+                <td id="editColumn">
+                    <i class="fa-solid fa-trash text-xs cursor-pointer" (click)="onDeleteIconClick(i)"
+                        [ngStyle]="{'display':urlData[selectedInfoType].length==1&&i==0 ? 'none' : '' }"></i>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div *ngIf="selectedInfoType=='body'">
+        <textarea rows="5" class="w-full text-sm border-solid border-gray-400 border-[2px] rounded-sm p-3"
+            placeholder="Enter data " [(ngModel)]="urlData['body']"></textarea>
+    </div>
+</div>

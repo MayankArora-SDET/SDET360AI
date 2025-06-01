@@ -1,0 +1,138 @@
+<div class=" min-h-screen ">
+  <div class="max-h-full">
+    <div class="flex flex-col gap-8">
+      <div>
+        <mat-card class="bg-white shadow-md rounded-lg overflow-hidden">
+          <mat-card-content>
+            <div class="flex flex-col items-center p-6  border-gray-200">
+              <!-- <div class="relative w-32 h-32 mb-4">
+                <img src="/assets/m.png" alt="Profile Picture"
+                  class="w-full h-full rounded-full object-cover border-4 border-blue-100">
+                <button color="primary" class="absolute bottom-0 right-0" (click)="fileInput.click()">
+                  <mat-icon>photo_camera</mat-icon>
+                </button>
+                <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)">
+              </div> -->
+              <h2 class="text-xl font-bold text-gray-800">{{profileForm.get('name')?.value}}</h2>
+              <p class="text-gray-500">{{profileForm.get('role')?.value}} - {{profileForm.get('department')?.value}}</p>
+            </div>
+
+            <form [formGroup]="profileForm" class="p-6">
+              <div class="flex flex-col space-y-4">
+                <mat-form-field class="w-full">
+                  <mat-label>User Name</mat-label>
+                  <input matInput formControlName="name" placeholder="Your full name" readonly>
+                  <mat-error *ngIf="profileForm?.get('name')?.hasError('required')">Name is required</mat-error>
+                </mat-form-field>
+
+                <mat-form-field class="w-full">
+                  <mat-label>Email</mat-label>
+                  <input matInput formControlName="email" placeholder="Your email" readonly>
+                  <mat-error *ngIf="profileForm?.get('email')?.hasError('required')">Email is required</mat-error>
+                  <mat-error *ngIf="profileForm?.get('email')?.hasError('email')">Please enter a valid email</mat-error>
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>Select vertical</mat-label>
+                  <mat-select matSelect formControlName="activeVertical"
+                    (selectionChange)="onVerticalSelectionChange($event)" name="verticalDropdown">
+
+                    <mat-option *ngFor="let vertical of verticalListData"
+                      [value]="vertical.id">{{vertical.verticalName}}</mat-option>
+
+
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </form>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div>
+        <mat-card class="bg-white shadow-md rounded-lg">
+          <mat-card-header class=" border-gray-200 bg-gray-50">
+            <mat-card-title class="py-4 px-6 text-xl font-medium">Your Verticals</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="p-0">
+            <mat-accordion>
+              <mat-expansion-panel *ngFor="let vertical of verticalListData; let i = index" [expanded]="i === 0">
+                <mat-expansion-panel-header>
+                  <mat-panel-title class="flex items-center">
+                    <mat-icon class="text-blue-600 mr-3">domain</mat-icon>
+                    <span>{{vertical.verticalName}}</span>
+                  </mat-panel-title>
+                  <mat-panel-description class="justify-end">
+                    <div class="flex flex-wrap">
+                      <span *ngFor="let project of vertical.projects"
+                        class="bg-blue-100 text-blue-600 text-xs font-medium px-2 py-1 rounded mr-2 mb-1">
+                        {{project}}
+                      </span>
+                    </div>
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+
+                <div class="py-2 px-4">
+                  <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                    <h3 class="text-lg font-medium text-blue-800 mb-3">Jira Connection</h3>
+                    <!-- Replaced grid with flexbox -->
+                    <div class="flex flex-wrap">
+                      <div class="w-full md:w-1/2 p-2">
+                        <p class="text-sm font-medium text-gray-500">Server</p>
+                        <p class="text-gray-700">{{vertical.jiraServerUrl}}</p>
+                      </div>
+                      <!-- <div class="w-full md:w-1/2 p-2">
+                        <p class="text-sm font-medium text-gray-500">Username</p>
+                        <p class="text-gray-700">{{vertical.jiraUsername}}</p>
+                      </div> -->
+                      <div class="w-full md:w-1/2 p-2">
+                        <p class="text-sm font-medium text-gray-500">API Token</p>
+                        <div class="flex items-center">
+                          <p class="text-gray-700">{{showToken(vertical.apiKey)}}</p>
+                          <!-- <button mat-icon-button color="primary" class="ml-2">
+                            <mat-icon>visibility</mat-icon>
+                          </button> -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">Projects</h3>
+                    <!-- Replaced grid with flexbox -->
+                    <div class="flex flex-wrap">
+                      <div *ngFor="let project of vertical.projects" class="w-full md:w-1/2 lg:w-1/3 p-2">
+                        <mat-card class="bg-white border border-gray-200 rounded-lg h-full">
+                          <mat-card-content>
+                            <div class="flex items-center">
+                              <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center mr-3">
+                                <mat-icon class="text-purple-600">folder</mat-icon>
+                              </div>
+                              <div>
+                                <h4 class="font-medium">{{project}}</h4>
+                                <p class="text-xs text-gray-500">Jira Project</p>
+                              </div>
+                            </div>
+                          </mat-card-content>
+                        </mat-card>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- <div class="flex justify-end space-x-2 mt-4">
+                    <button mat-stroked-button color="warn">
+                      <mat-icon>delete</mat-icon>
+                      Remove
+                    </button>
+                    <button mat-raised-button color="primary" (click)="editVertical(vertical)">
+                      <mat-icon>edit</mat-icon>
+                      Edit
+                    </button>
+                  </div> -->
+                </div>
+              </mat-expansion-panel>
+            </mat-accordion>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,31 @@
+<div class="line-chart-container">
+  <h2 class="chart-title" *ngIf="chartTitle">{{ chartTitle }}</h2>
+  
+  <div class="chart-wrapper">
+    <ngx-charts-line-chart
+      [view]="view"
+      [scheme]="colorScheme"
+      [results]="chartData"
+      [gradient]="false"
+      [xAxis]="showXAxis"
+      [yAxis]="showYAxis"
+      [legend]="showLegend"
+      [showXAxisLabel]="showXAxisLabel"
+      [showYAxisLabel]="showYAxisLabel"
+      [xAxisLabel]="xAxisLabel"
+      [yAxisLabel]="yAxisLabel"
+      [autoScale]="autoScale"
+      [legendPosition]="legendPosition"
+      [showGridLines]="showGridLines"
+      [roundDomains]="roundDomains"
+      [curve]="curve"
+      [animations]="true"
+      [showRefLines]="showRefLines"
+      [showRefLabels]="showRefLines"
+      (select)="onSelect($event)"
+      (activate)="onActivate($event)"
+      (deactivate)="onDeactivate($event)"
+      (window:resize)="onResize($event)">
+    </ngx-charts-line-chart>
+  </div>
+</div>

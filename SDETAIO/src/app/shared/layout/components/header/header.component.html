@@ -1,0 +1,16 @@
+<header class="z-50  h-[70px] box-border px-3">
+    <div class="w-full h-full Border flex items-center justify-between">
+        <div class="flex gap-4 items-center">
+            <mat-icon *ngIf="!isMenuOpen"
+                class=" block md:visible cursor-pointer transition-transform duration-300 ease-in-out hover:scale-110"
+                (click)="onMenuIconClick()" aria-label="Toggle menu">
+                {{ isMenuOpen ? 'menu_open' : 'menu' }}
+            </mat-icon>
+            <h2 class="font-semibold text-lg">{{mainHeading}}</h2>
+        </div>
+        <button class="mainButton flex items-center gap-3 justify-center rounded-md" (click)="logout()">
+            <img src="/assets/icons/exit.png" class="w-[20px] h-[20px]" />
+            <span class="font-semibold"> Signout</span>
+        </button>
+    </div>
+</header>

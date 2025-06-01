@@ -1,0 +1,18 @@
+<div class="flex items-center gap-2">
+    <div class="w-3/4">
+        <app-title-with-back-button title="Locator Generator"></app-title-with-back-button>
+    </div>
+    <div class="w-1/4">
+        <mat-form-field class="w-full">
+            <mat-label>Select a framework</mat-label>
+            <mat-select [(ngModel)]="selectedTool" placeholder="Select Category"
+                (selectionChange)="onFrameworkChange($event)">
+                <mat-option *ngFor="let tool of toolList" [value]="tool.value">
+                    {{ tool.label }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+
+    </div>
+
+</div>

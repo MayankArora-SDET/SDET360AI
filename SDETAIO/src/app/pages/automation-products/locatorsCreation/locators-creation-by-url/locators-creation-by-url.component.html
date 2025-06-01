@@ -1,0 +1,28 @@
+<div class="mt-5 text-center">
+    <label for="urlInput" class="text-sm font-semibold mr-4">Enter Url</label>
+    <input id="urlInput" type="text" [(ngModel)]="urlEntered"
+        class="p-2 mr-4 inline-block min-w-[200px] w-[60%] text-sm border-solid border-slate-500 border-[2px] rounded-md"
+        placeholder="Enter url" />
+    <button class="bg-[#1b59f8] text-white rounded-md p-2 text-sm active:bg-blue-700"
+        (click)="onSubmitClick()">Generate</button>
+
+</div>
+<div class="mt-5">
+    <div *ngIf="!isLoading && !errorMessage && locatorUrlResponse; else loadOrErrorContent">
+        <!-- <pre class="text-sm text-wrap" [innerHTML]="locatorUrlResponse | prettyJson"></pre> -->
+        <app-locator-table [locatorData]="locatorUrlResponse"></app-locator-table>
+    </div>
+
+    <ng-template #loadOrErrorContent>
+        <div *ngIf="isLoading; else errorContent" class="flex justify-center gap-5 items-center ">
+            <app-animation-ping class="inline"></app-animation-ping>
+            <span class="ml-2 text-xs text-gray-500">Generating...</span>
+        </div>
+
+        <ng-template #errorContent>
+            <div class="flex justify-center items-center text-red-500 text-sm ">
+                <span class="ml-2 text-xs"> {{ errorMessage }}</span>
+            </div>
+        </ng-template>
+    </ng-template>
+</div>

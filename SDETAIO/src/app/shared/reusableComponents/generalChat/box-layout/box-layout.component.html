@@ -1,0 +1,25 @@
+<div class="justify-end" [ngStyle]="{ display: boxType === 'prompt' ? 'flex' : '' }">
+    <div class="max-w-[80%] rounded-sm p-[10px] min-w-5 w-auto min-h-5 text-sm" [ngClass]="">
+        <div *ngIf="boxType=='prompt'" class="bg-[#E3E3E3] p-2 rounded-sm whitespace-pre-line">
+            {{ data }}
+        </div>
+
+        <div *ngIf="boxType === 'response'">
+            <div *ngIf="data!='error';else errorTemplate">
+                <ng-container *ngIf="componentType !== 'locatorsCreation' ; else locatorView">
+                    <markdown [data]="data"></markdown>
+                </ng-container>
+
+                <ng-template #locatorView>
+                    <!-- <pre class="text-sm text-wrap" [innerHTML]="data | prettyJson"></pre> -->
+                    <app-locator-table [locatorData]="data"></app-locator-table>
+                </ng-template>
+            </div>
+            <ng-template #errorTemplate>
+                <p>Error has occured while generating response</p>
+            </ng-template>
+
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,16 @@
+<div *ngIf="router.url!='/login'">
+    <app-navigation-panel [userdetails]="userDetails">
+        <div class="px-4">
+
+            <router-outlet>
+                <!-- <app-footer></app-footer> -->
+            </router-outlet>
+        </div>
+
+    </app-navigation-panel>
+
+
+</div>
+<div *ngIf="router.url=='/login'">
+    <router-outlet></router-outlet>
+</div>

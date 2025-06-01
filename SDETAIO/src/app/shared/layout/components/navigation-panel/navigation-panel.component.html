@@ -1,0 +1,11 @@
+<div>
+    <app-header class="header" [ngStyle]="{ left: sideNavExpanded ? '250px' : '0px' }"></app-header>
+    <app-side-nav class="sideNav" [ngClass]="sideNavExpanded ? 'sideMenuExpanded' : 'sideMenuCollapsed'"></app-side-nav>
+    <div class="maincontent hideScroll " [ngStyle]="{ 'margin-left': sideNavExpanded ? '250px' : '0px' }">
+        <!-- <div class="h-full overflow-y-auto hideScroll"> -->
+        <ng-content></ng-content>
+        <!-- </div> -->
+    </div>
+
+
+</div>

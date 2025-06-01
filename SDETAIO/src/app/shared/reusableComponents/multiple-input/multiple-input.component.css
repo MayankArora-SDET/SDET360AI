@@ -1,0 +1,14 @@
+input {
+    border: solid black 2px !important;
+    border-radius: 4px;
+}
+
+input::placeholder {
+    font-size: 15px;
+}
+
+.crossBorder {
+    border: solid black 2px;
+    border-radius: 20px;
+
+}

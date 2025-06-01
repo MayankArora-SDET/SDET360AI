@@ -1,0 +1,170 @@
+@import "@fontsource/inter";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+body {
+  font-family: 'Inter' !important;
+}
+
+.hideScroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* 
+h1 {
+  font-size: 2.5em;
+}
+
+h2 {
+  font-size: 2em;
+}
+
+h3 {
+  font-size: 1.5em;
+}
+
+h4 {
+  font-size: 1em;
+}
+
+h5 {
+  font-size: 0.8em;
+}
+
+h6 {
+  font-size: 0.6em;
+} */
+
+.mainButton {
+  background-color: #1B59F8;
+  padding: 8px 16px;
+  color: white;
+
+}
+
+.mainButton:focus {
+  outline: 3px solid #86868618;
+  /* Thick blue outline */
+  outline-offset: 2px;
+}
+
+.responseBorder {
+  border: solid rgb(191, 191, 191) 2px;
+  border-radius: 6px;
+  padding: 10px;
+
+}
+
+ol {
+  list-style-type: decimal;
+  /* Options: decimal, lower-alpha, upper-alpha, lower-roman, upper-roman, etc. */
+  margin-left: 20px;
+
+}
+
+ul {
+  margin-left: 40px;
+  list-style-position: inside;
+  list-style-type: disc;
+
+}
+
+
+
+textarea {
+  resize: none;
+}
+
+.markdown input[type="checkbox"] {
+  margin-right: 15px;
+}
+
+.markdown li p {
+  display: inline;
+}
+
+/* wrapper classes in markdown */
+.wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-items: start;
+  align-items: start;
+  width: 100%;
+  background-color: #e7e7ea;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  font-size: small;
+
+}
+
+
+.testCaseTitle {
+  width: 40%;
+}
+
+.testCaseSteps {
+  width: 50%;
+  line-height: 30px;
+}
+
+.testCaseSteps strong {
+  color: rgb(78, 70, 133);
+}
+
+.customScrollBar::-webkit-scrollbar {
+  width: 3px;
+}
+
+/* Track */
+.customScrollBar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+.customScrollBar::-webkit-scrollbar-thumb {
+  background: #183f7d;
+  padding-top: 10px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+#dialogImagePopUp {
+  width: calc(100vw - 80px);
+  height: calc(100vh - 80px);
+}
+
+#dialogImagePopUp img {
+
+  object-fit: contain;
+}
+
+.mat-dialog-container {
+  width: 80vw;
+}
+
+
+/* prettier pipe */
+pre {
+  text-wrap-mode: wrap;
+}
+
+.custom-dialog-container .mat-dialog-container {
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cdk-overlay-pane {
+  @apply flex items-center justify-center;
+}

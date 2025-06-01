@@ -1,0 +1,37 @@
+<!-- <app-project-pop-up></app-project-pop-up> -->
+<div class="m-4 h-full hideScroll">
+    <div class="w-full h-[400px] bg-[#678da7] p-4">
+        <div class="flex justify-between items-center">
+            <!-- <h2 class="font-semibold text-[30px] text-white">Hello {{username}},</h2> -->
+            <div class="bg-white p-1 rounded-sm ">
+                <img src="assets/sdetLogo.png" class="w-[250px] h-[100px] " />
+            </div>
+        </div>
+        <div class="mt-4 text-gray-200 text-[16px] font-sans leading-7 font-medium ">
+            <p>
+                Revolutionize QA with our AI-powered platform, offering an all-encompassing solution for every testing
+                need. From intelligently interpreting requirements and automating test cases across functional,
+                regression, and API layers to executing complex automation frameworks, we ensure robust quality
+                coverage. With seamless integration into CI/CD pipelines, real-time analytics, and actionable insights,
+                our platform optimizes the QA process, accelerates delivery timelines, and improves product quality.
+                Experience unparalleled efficiency, precision, and scalability in your testing lifecycle—all in one
+                unified platform.
+            </p>
+        </div>
+
+    </div>
+    <div class="grid lg:grid-cols-3 grid-cols-1 gap-8 p-4 -translate-y-10 ">
+        <div *ngFor="let product of aboutProductList" class="bg-white p-4 rounded-md shadow-lg">
+            <div class="flex gap-4 items-center">
+                <img [src]="product.icon" class="w-[50px] h-[50px]" />
+                <h4 class="font-semibold font-sans text-lg">{{product.featureHeading}}</h4>
+
+            </div>
+            <p class="mt-4 text-sm mb-4">
+                {{product.aboutFeature}}
+            </p>
+
+        </div>
+
+    </div>
+</div>

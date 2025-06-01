@@ -1,0 +1,103 @@
+<body class="flex justify-center">
+    <div class="container px-2 py-4">
+        <app-dashboard-header title="Project Report"
+            (onVerticalSelected)="onVerticalChange($event)"></app-dashboard-header>
+
+        <!-- Top Metrics Boxes Row -->
+        <div class="grid grid-cols-4 gap-4 mb-6 testCaseData">
+            <div class="border rounded-lg p-4  bg-white cursor-pointer" [class.active]="selectedMetric=='totalTests'"
+                (click)="selectMetric('totalTests')">
+                <div class="text-center">
+                    <h4 class="  ">Total Tests</h4>
+                    <p class="text-2xl font-bold">{{ totalTests[selectedVertical] }}</p>
+                </div>
+            </div>
+            <div class="border rounded-lg p-4  bg-white cursor-pointer" [class.active]="selectedMetric=='totalStories'"
+                (click)="selectMetric('totalStories')">
+                <div class="text-center">
+                    <h4 class="  ">Total Stories</h4>
+                    <p class="text-2xl font-bold">{{ totalStories[selectedVertical] }}</p>
+                </div>
+            </div>
+            <div class="border rounded-lg p-4  bg-white cursor-pointer" [class.active]="selectedMetric=='totalDefects'"
+                (click)="selectMetric('totalDefects')">
+                <div class="text-center">
+                    <h4 class="">Total Defects</h4>
+                    <p class="text-2xl font-bold">{{ totalDefects[selectedVertical] }}</p>
+                </div>
+            </div>
+            <div class="border rounded-lg p-4  bg-white cursor-pointer" [class.active]="selectedMetric=='totalTasks'"
+                (click)="selectMetric('totalTasks')">
+                <div class="text-center">
+                    <h4 class="">Total Tasks</h4>
+                    <p class="text-2xl font-bold">{{ totalTasks[selectedVertical] }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executed and Test to Execute Boxes -->
+        <!-- <div class="grid grid-cols-2 gap-6 mb-6">
+            <div class="border rounded-lg p-4  bg-white cursor-pointer" (click)="navigateToExecuted()">
+                <div class="text-center">
+                    <h3 class="text-xl font-semibold mb-2">Executed</h3>
+                </div>
+            </div>
+            <div class="border rounded-lg p-4  bg-white cursor-pointer" (click)="navigateToTestToExecute()">
+                <div class="text-center">
+                    <h3 class="text-xl font-semibold mb-2">Test to Execute</h3>
+                </div>
+            </div>
+        </div> -->
+
+        <!-- Main Chart Section -->
+        <div class="border rounded-lg p-4 mb-6  bg-white">
+            <div *ngIf="selectedMetric === 'totalTests'">
+                <app-bar-chart chartTitle="Test Case Execution Chart"
+                    [chartData]="testExecutionStatusData[selectedVertical]"
+                    [colorScheme]="testExecutionStatusColorScheme" xAxisLabel="Status" yAxisLabel="Count"
+                    [view]="[700, 400]" totalHeading="Total Test Cases" [showTotalTestCases]="true">
+                </app-bar-chart>
+            </div>
+            <div *ngIf="selectedMetric === 'totalStories'">
+                <app-bar-chart chartTitle="Stories Status Chart" [chartData]="storiesAndEpicsData[selectedVertical]"
+                    [colorScheme]="barChartColorScheme" xAxisLabel="Status" yAxisLabel="Count" [view]="[700, 400]"
+                    totalHeading="Stories in current Sprint" [showTotalTestCases]="true">
+                </app-bar-chart>
+            </div>
+            <div *ngIf="selectedMetric === 'totalDefects'">
+                <app-bar-chart chartTitle="Bugs by Priority" [chartData]="defectsByPriorityData[selectedVertical]"
+                    [colorScheme]="defectPriorityColorScheme" xAxisLabel="Priority" yAxisLabel="Count"
+                    [view]="[700, 400]" totalHeading="Bugs Documented" [showTotalTestCases]="true">
+                </app-bar-chart>
+            </div>
+            <div *ngIf="selectedMetric === 'totalTasks'">
+                <app-bar-chart chartTitle="Automation Coverage" [chartData]="automationTestStatus[selectedVertical]"
+                    [colorScheme]="automationStatusColorScheme" xAxisLabel="Status" yAxisLabel="Count"
+                    [view]="[700, 400]" totalHeading="Total Test Cases" [showTotalTestCases]="true">
+                </app-bar-chart>
+            </div>
+        </div>
+
+        <!-- Sprint Data Section - Now using *ngFor for dynamic rendering -->
+        <div *ngFor="let sprint of sprintData" class="grid grid-cols-5 gap-4 mb-6">
+            <!-- Sprint Label -->
+            <div class="flex justify-center items-center pr-4 bg-white shadow rounded-lg w-full">
+                <span class="font-semibold">{{ sprint.name }}</span>
+            </div>
+
+            <!-- Sprint Metrics - Dynamically rendered from sprintData -->
+            <div *ngFor="let metric of sprint.metrics" class="bg-white shadow rounded-lg p-3 text-center">
+                <div class="font-medium">{{ metric.label }}</div>
+                <div class="text-xl font-bold" [ngClass]="metric.color">{{ metric.value }}</div>
+            </div>
+        </div>
+
+        <!-- Burn-Up Chart -->
+        <div class="border rounded-lg p-4  bg-white">
+            <app-line-chart chartTitle="Test Case Burn-Up Chart"
+                [chartData]="testExecutionOverTimeData[selectedVertical]" [colorScheme]="testExecutionColorScheme"
+                xAxisLabel="Sprint Progress (1 to 10)" yAxisLabel="Planned Test Cases" [view]="[1000, 400]">
+            </app-line-chart>
+        </div>
+    </div>
+</body>
