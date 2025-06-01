@@ -5,15 +5,17 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y curl
 
+# Create the generated directory first to ensure it exists
+RUN mkdir -p /app/app/generated
+
 # Copy requirements first for better caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy Python application code (excluding the generated directory)
 COPY . .
 
-# Create the generated directory if it doesn't exist
-RUN mkdir -p /app/app/generated
+# The generated protobuf files will be mounted from the host at runtime
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1

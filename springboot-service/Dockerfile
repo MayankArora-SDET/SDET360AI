@@ -1,16 +1,16 @@
 # Build stage
-FROM maven:3.9-eclipse-temurin-23 AS build
+FROM maven:3.9-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
 # Copy only the POM file first to leverage Docker cache
-COPY pom.xml .
+COPY springboot-service/pom.xml .
 
 # Download dependencies in a separate layer
 RUN mvn dependency:go-offline -B
 
-# Copy source code
-COPY src ./src
+# Copy source code (including pre-generated protobuf classes)
+COPY springboot-service/src ./src
 
 # Build the application with parallel builds and skip tests
 RUN mvn clean package -DskipTests -T 1C
