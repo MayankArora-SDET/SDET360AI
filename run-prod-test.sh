@@ -212,14 +212,14 @@ stop_services() {
 # Function to build and run Docker image
 build_and_run_docker() {
     echo "Building Docker image..."
-    docker build -t sdet360ai:test .
+    docker build -t sdet360ai .
     if [ $? -ne 0 ]; then
         echo "Error: Failed to build Docker image."
         exit 1
     fi
     
     echo "Running Docker container..."
-    docker run -d --name sdet360ai-test -p 4201:4201 -p 8081:8080 -p 8001:8001 -p 50051:50051 -p 5433:5432 sdet360ai:test
+    docker run -d --name sdet360ai -p 4201:4201 -p 8081:8080 -p 8001:8001 -p 50051:50051 -p 5433:5432 sdet360ai:test
     
     echo "Docker container started!"
     echo "Frontend: http://localhost:4201"
