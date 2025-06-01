@@ -1,13 +1,19 @@
-# Build stage
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:22.04 AS base
 
-# Prevent interactive prompts
+# Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build dependencies
+# Install common dependencies
 RUN apt-get update && apt-get install -y \
-    curl wget git build-essential software-properties-common \
-    apt-transport-https ca-certificates gnupg tar \
+    curl \
+    wget \
+    git \
+    build-essential \
+    software-properties-common \
+    apt-transport-https \
+    ca-certificates \
+    gnupg \
+    tar \
     && rm -rf /var/lib/apt/lists/*
 
 # Install OpenJDK 23
@@ -21,62 +27,111 @@ RUN ARCH=$(uname -m) && \
     fi && \
     wget $JDK_URL -O openjdk-23.tar.gz && \
     tar -xzf openjdk-23.tar.gz -C /opt/ && \
-    rm openjdk-23.tar.gz
+    rm openjdk-23.tar.gz && \
+    ls -la /opt/
 
-# Set up Java environment
+# Find and set JAVA_HOME dynamically
+RUN JAVA_PATH=$(find /opt -name "jdk-*" -type d | head -1) && \
+    echo "Found Java at: $JAVA_PATH" && \
+    echo "export JAVA_HOME=$JAVA_PATH" >> /etc/environment && \
+    echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /etc/environment
+
+# Set environment variables for this build
 ENV JAVA_HOME=/opt/jdk-23
 ENV PATH="$JAVA_HOME/bin:$PATH"
+
+# Verify Java installation and fix JAVA_HOME if needed
+RUN if [ ! -d "$JAVA_HOME" ]; then \
+        ACTUAL_JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1); \
+        echo "Adjusting JAVA_HOME from $JAVA_HOME to $ACTUAL_JAVA_HOME"; \
+        export JAVA_HOME=$ACTUAL_JAVA_HOME; \
+        export PATH="$JAVA_HOME/bin:$PATH"; \
+    fi && \
+    echo "Final JAVA_HOME: $JAVA_HOME" && \
+    ls -la $JAVA_HOME && \
+    java -version && javac -version
+
+# Install Python 3.11
+RUN add-apt-repository ppa:deadsnakes/ppa -y && \
+    apt-get update && \
+    apt-get install -y python3.11 python3.11-dev python3.11-venv python3-pip && \
+    rm -rf /var/lib/apt/lists/* && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+
+# Install Node.js 20 and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get update && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install PostgreSQL
+RUN apt-get update && apt-get install -y postgresql postgresql-contrib && rm -rf /var/lib/apt/lists/*
+
+# Install Protocol Buffers compiler
+RUN apt-get update && apt-get install -y protobuf-compiler && rm -rf /var/lib/apt/lists/*
 
 # Install Maven
 RUN apt-get update && apt-get install -y maven && rm -rf /var/lib/apt/lists/*
 
-# Build Spring Boot application
-WORKDIR /app
-COPY springboot-service/pom.xml /app/springboot-service/
-WORKDIR /app/springboot-service
-RUN mvn dependency:go-offline -B
-
-# Copy and build the application
-COPY . /app/
-RUN mvn clean package -DskipTests
-
-# Runtime stage
-FROM ubuntu:22.04
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    python3.11 python3-pip postgresql postgresql-contrib \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy Java runtime from builder
-COPY --from=builder /opt/jdk-23 /opt/jdk-23
-ENV JAVA_HOME=/opt/jdk-23
-ENV PATH="$JAVA_HOME/bin:$PATH"
+# Verify Maven can find Java
+RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
+    export PATH="$JAVA_HOME/bin:$PATH" && \
+    echo "Maven using JAVA_HOME: $JAVA_HOME" && \
+    mvn -version
 
 # Set up working directory
 WORKDIR /app
 
-# Copy built artifacts
-COPY --from=builder /app/springboot-service/target/sdet360-0.0.1-SNAPSHOT.jar /app/
+# Copy dependency files first to leverage Docker cache
+COPY springboot-service/pom.xml /app/springboot-service/
+COPY ai-service/requirements.txt /app/ai-service/
+
+# Install backend dependencies
+WORKDIR /app/springboot-service
+RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
+    export PATH="$JAVA_HOME/bin:$PATH" && \
+    mvn dependency:go-offline -B
 
 # Install Python dependencies
-COPY ai-service/requirements.txt /app/ai-service/requirements.txt
-RUN python3.11 -m pip install --no-cache-dir -r /app/ai-service/requirements.txt
+WORKDIR /app/ai-service
+RUN python -m pip install --upgrade pip && \
+    python -m pip install -r requirements.txt
 
-# Copy application code and scripts
-COPY . /app/
+# Copy the rest of the application code
+WORKDIR /app
+COPY . .
 
-# Make scripts executable
-RUN chmod +x /app/start-services.sh && \
-    chmod +x /app/compile-proto.sh && \
-    /app/compile-proto.sh
+# Set up PostgreSQL
+USER postgres
+RUN /etc/init.d/postgresql start && \
+    psql --command "CREATE DATABASE mastersdet360;" && \
+    psql --command "ALTER USER postgres WITH PASSWORD '12345';" && \
+    psql --command "GRANT ALL PRIVILEGES ON DATABASE mastersdet360 TO postgres;" && \
+    psql --command "ALTER USER postgres WITH SUPERUSER;"
+USER root
+
+# Compile Protocol Buffers
+RUN chmod +x /app/compile-proto.sh && /app/compile-proto.sh
+
+# Build Spring Boot service
+WORKDIR /app/springboot-service
+RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
+    export PATH="$JAVA_HOME/bin:$PATH" && \
+    mvn clean package -DskipTests
+
 
 # Expose ports
 EXPOSE 8080 8001 50051 5433
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
+# Create startup script
+WORKDIR /app
+RUN echo '#!/bin/bash\n\
+service postgresql start\n\
+cd /app/ai-service && python main.py &\n\
+cd /app/springboot-service && java -jar target/sdet360-0.0.1-SNAPSHOT.jar &\n\
+tail -f /dev/null' > /app/start.sh && \
+chmod +x /app/start.sh
 
-# Start services
-CMD ["/app/start-services.sh"]
+# Set entry point
+ENTRYPOINT ["/app/start.sh"]
