@@ -83,9 +83,17 @@ RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
 # Set up working directory
 WORKDIR /app
 
+# RUN curl -fsSL https://ollama.com/install.sh | sh
+# RUN ollama install llama3.1:70b
+
 # Copy dependency files first to leverage Docker cache
+COPY SDETAIO/package*.json /app/SDETAIO/
 COPY springboot-service/pom.xml /app/springboot-service/
 COPY ai-service/requirements.txt /app/ai-service/
+
+# Install frontend dependencies
+WORKDIR /app/SDETAIO
+RUN npm install
 
 # Install backend dependencies
 WORKDIR /app/springboot-service
@@ -120,9 +128,12 @@ RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
     export PATH="$JAVA_HOME/bin:$PATH" && \
     mvn clean package -DskipTests
 
+# Build Angular frontend
+WORKDIR /app/SDETAIO
+RUN npm run build
 
 # Expose ports
-EXPOSE 8080 8001 50051 5433
+EXPOSE 4201 8080 8001 50051 5433
 
 # Create startup script
 WORKDIR /app
@@ -130,6 +141,7 @@ RUN echo '#!/bin/bash\n\
 service postgresql start\n\
 cd /app/ai-service && python main.py &\n\
 cd /app/springboot-service && java -jar target/sdet360-0.0.1-SNAPSHOT.jar &\n\
+cd /app/SDETAIO && npx serve -s dist/ai/browser -l 4201\n\
 tail -f /dev/null' > /app/start.sh && \
 chmod +x /app/start.sh
 
