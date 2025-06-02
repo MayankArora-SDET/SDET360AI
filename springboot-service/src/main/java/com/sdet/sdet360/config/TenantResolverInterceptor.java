@@ -153,10 +153,15 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
         if (parts.length >= 3) {
             String subdomain = parts[0];
             String domain = String.join(".", java.util.Arrays.copyOfRange(parts, 1, parts.length));
+
+            if (domain.equals(PRIMARY_DOMAIN) || domain.equals(SECONDARY_DOMAIN)) {
+                return new DomainInfo(domain, subdomain);
+            }
             return new DomainInfo(domain, subdomain);
         } else if (parts.length == 2) {
             return new DomainInfo(serverName, null);
         } else {
+            // Single part domain
             return new DomainInfo(serverName, null);
         }
     }
