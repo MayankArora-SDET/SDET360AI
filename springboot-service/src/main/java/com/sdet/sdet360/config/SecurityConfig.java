@@ -81,7 +81,7 @@ public class SecurityConfig {
             "chrome-extension://nnomjikodbfkmliniolghhafheeccabb",
                 "chrome-extension://*",
             "http://tenant1.localhost:4200","http://demo.localhost:4200",
-                "https://103.196.86.35","http://103.196.86.35",
+                "https://103.196.86.35","http://103.196.86.35","https://3zeb3azkqo7l80-8080.proxy.runpod.net/*",
                 "https://demo.103.196.86.35","https://tenant1.103.196.86.35"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));

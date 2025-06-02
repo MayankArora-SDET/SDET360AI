@@ -24,6 +24,7 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
     private static final String PRIMARY_DOMAIN = "sdet360.ai";
     private static final String SECONDARY_DOMAIN = "sdet360";
     private static final String RUNPOD_DOMAIN = "103.196.86.35";
+    private static final String RUNPOD_DOMAIN_URL = "3zeb3azkqo7l80-8080.proxy.runpod.net";
 
     public TenantResolverInterceptor(TenantRepository tenantRepository) {
         this.tenantRepository = tenantRepository;
@@ -140,6 +141,12 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
                 return new DomainInfo(RUNPOD_DOMAIN, subdomain);
             }
         }
+        if (serverName.endsWith("." + RUNPOD_DOMAIN_URL)) {
+            String subdomain = serverName.replace("." + RUNPOD_DOMAIN_URL, "");
+            if (!subdomain.isEmpty()) {
+                return new DomainInfo(RUNPOD_DOMAIN_URL, subdomain);
+            }
+        }
 
         String[] parts = serverName.split("\\.");
 
@@ -155,7 +162,7 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
     }
 
     private void handleFallbackTenantResolution(String serverName) {
-        if (LOCALHOST_DOMAIN.equals(serverName) || PRIMARY_DOMAIN.equals(serverName) || SECONDARY_DOMAIN.equals(serverName)||RUNPOD_DOMAIN.equals(serverName)) {
+        if (LOCALHOST_DOMAIN.equals(serverName) || PRIMARY_DOMAIN.equals(serverName) || SECONDARY_DOMAIN.equals(serverName)||RUNPOD_DOMAIN.equals(serverName)||RUNPOD_DOMAIN_URL.equals(serverName)) {
             Optional<Tenant> firstTenant = tenantRepository.findAll().stream().findFirst();
             if (firstTenant.isPresent()) {
                 logger.warn("No specific tenant matched for '{}', defaulting to first tenant: {}",
