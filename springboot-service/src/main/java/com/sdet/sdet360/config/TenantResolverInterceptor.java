@@ -23,6 +23,7 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
     private static final String LOCALHOST_DOMAIN = "localhost";
     private static final String PRIMARY_DOMAIN = "sdet360.ai";
     private static final String SECONDARY_DOMAIN = "sdet360";
+    private static final String RUNPOD_DOMAIN = "103.196.86.35";
 
     public TenantResolverInterceptor(TenantRepository tenantRepository) {
         this.tenantRepository = tenantRepository;
@@ -128,27 +129,41 @@ public class TenantResolverInterceptor implements HandlerInterceptor {
         if (serverName == null || serverName.isEmpty()) {
             return new DomainInfo(null, null);
         }
- 
+
+        // Handle localhost domains
         if (serverName.endsWith("." + LOCALHOST_DOMAIN)) {
             String subdomain = serverName.replace("." + LOCALHOST_DOMAIN, "");
             return new DomainInfo(LOCALHOST_DOMAIN, subdomain.isEmpty() ? null : subdomain);
         }
- 
+
+        // Handle specific IP address
+        if (RUNPOD_DOMAIN.equals(serverName)) {
+            return new DomainInfo(RUNPOD_DOMAIN, null);
+        }
+        
+        // Handle subdomains of the specific IP
+        if (serverName.endsWith("." + RUNPOD_DOMAIN)) {
+            String subdomain = serverName.replace("." + RUNPOD_DOMAIN, "");
+            if (!subdomain.isEmpty()) {
+                return new DomainInfo(RUNPOD_DOMAIN, subdomain);
+            }
+        }
+
+        // Handle regular domains
         String[] parts = serverName.split("\\.");
 
         if (parts.length >= 3) { 
             String subdomain = parts[0];
             String domain = String.join(".", java.util.Arrays.copyOfRange(parts, 1, parts.length));
             return new DomainInfo(domain, subdomain);
-        } else if (parts.length == 2) {
-            return new DomainInfo(serverName, null);
-        } else {
-            return new DomainInfo(serverName, null);
         }
+        
+        // Default case for simple domains
+        return new DomainInfo(serverName, null);
     }
 
     private void handleFallbackTenantResolution(String serverName) {
-        if (LOCALHOST_DOMAIN.equals(serverName) || PRIMARY_DOMAIN.equals(serverName) || SECONDARY_DOMAIN.equals(serverName)) {
+        if (LOCALHOST_DOMAIN.equals(serverName) || PRIMARY_DOMAIN.equals(serverName) || SECONDARY_DOMAIN.equals(serverName) || RUNPOD_DOMAIN.equals(serverName)) {
             Optional<Tenant> firstTenant = tenantRepository.findAll().stream().findFirst();
             if (firstTenant.isPresent()) {
                 logger.warn("No specific tenant matched for '{}', defaulting to first tenant: {}",
