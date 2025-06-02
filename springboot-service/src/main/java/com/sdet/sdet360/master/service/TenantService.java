@@ -1,8 +1,13 @@
 package com.sdet.sdet360.master.service;
 
+import com.sdet.sdet360.config.TenantAwareRoutingDataSource;
 import com.sdet.sdet360.master.entity.Tenant;
 import com.sdet.sdet360.master.repository.TenantRepository;
+import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,18 +15,26 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class TenantService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TenantService.class);
+
     private final TenantRepository tenantRepository;
     private final String adminDbUrl;
     private final String adminUsername;
     private final String adminPassword;
+
+    @Autowired
+    private TenantAwareRoutingDataSource tenantAwareRoutingDataSource;
 
     /**
      * Single constructor — Spring will wire up:
@@ -77,8 +90,15 @@ public class TenantService {
             tenant.setDbUsername(adminUsername);
             tenant.setDbPassword(adminPassword);
 
+            // Save the tenant first
             Tenant saved = tenantRepository.save(tenant);
+
+            // Run migrations
             runFlywayMigration(saved);
+
+            // Register the new tenant's data source
+            registerTenantDataSource(saved);
+
             return saved;
         } catch (Exception e) {
             throw new RuntimeException("Failed to create tenant", e);
@@ -110,6 +130,40 @@ public class TenantService {
                 .locations("classpath:db/tenant_migrations")
                 .load()
                 .migrate();
+    }
+
+    /**
+     * Registers a new tenant's data source in the routing data source
+     * @param tenant The tenant whose data source needs to be registered
+     */
+    private void registerTenantDataSource(Tenant tenant) {
+        try {
+            // Create a new data source for the tenant
+            HikariDataSource dataSource = new HikariDataSource();
+            dataSource.setJdbcUrl(tenant.getDbUrl());
+            dataSource.setUsername(tenant.getDbUsername());
+            dataSource.setPassword(tenant.getDbPassword());
+            dataSource.setMinimumIdle(2);
+            dataSource.setMaximumPoolSize(10);
+            dataSource.setDriverClassName("org.postgresql.Driver");
+
+            // Get the current target data sources
+            Map<Object, Object> targetDataSources = new HashMap<>(
+                    tenantAwareRoutingDataSource.getResolvedDataSources()
+            );
+
+            // Add the new tenant's data source
+            targetDataSources.put(tenant.getTenantId().toString(), dataSource);
+
+            // Update the routing data source
+            tenantAwareRoutingDataSource.setTargetDataSources(targetDataSources);
+            tenantAwareRoutingDataSource.afterPropertiesSet();
+
+            logger.info("Registered new tenant data source for tenant: {}", tenant.getTenantId());
+        } catch (Exception e) {
+            logger.error("Failed to register tenant data source for tenant: " + tenant.getTenantId(), e);
+            throw new RuntimeException("Failed to register tenant data source", e);
+        }
     }
 
     @Transactional
