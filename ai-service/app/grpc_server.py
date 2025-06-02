@@ -21,7 +21,7 @@ class AiServiceServicer(ai_service_pb2_grpc.AiServiceServicer):
         if not user_text and hasattr(request, 'parameters') and 'text' in request.parameters:
             user_text = request.parameters['text']
         
-        model = "grok"
+        model = "ollama"
         metadata = {"mode": "text_based_test_generation"}
         
         # Get model from parameters if specified
@@ -118,7 +118,7 @@ class AiServiceServicer(ai_service_pb2_grpc.AiServiceServicer):
             description_text = desc
         )
         logging.info(f"Using template {tpl_name}: {prompt}")
-        model = request.parameters.get("model", "grok")
+        model = request.parameters.get("model", "ollama")
         client = LLMClientFactory.get_client(model)
         try:
             ai_text = client.chat([{"role":"user","content":prompt}])
@@ -187,7 +187,7 @@ Example Inputs:
 """
         
         logging.info(f"Using API testing prompt: {prompt}")
-        model = request.parameters.get("model", "grok")
+        model = request.parameters.get("model", "ollama")
         client = LLMClientFactory.get_client(model)
         try:
             ai_text = client.chat([{"role": "user", "content": prompt}])
@@ -300,7 +300,7 @@ Ensure that:
     """
 
         try:
-            client = LLMClientFactory.get_client("grok")
+            client = LLMClientFactory.get_client("ollama")
             ai_text = client.chat([{"role": "user", "content": prompt}])
         except Exception as e:
             logging.error(f"LLM error: {str(e)}")
