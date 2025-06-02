@@ -85,7 +85,7 @@ RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
 WORKDIR /app
  
 RUN curl -fsSL https://ollama.com/install.sh | sh
-# RUN ollama install llama3 70b
+# RUN ollama run llama3.1:70b
  
 # Copy dependency files first to leverage Docker cache
 COPY SDETAIO/package*.json /app/SDETAIO/
