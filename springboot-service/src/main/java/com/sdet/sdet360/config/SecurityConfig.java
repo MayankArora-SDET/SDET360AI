@@ -79,7 +79,10 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
             "http://localhost:4200",
             "chrome-extension://nnomjikodbfkmliniolghhafheeccabb",
-            "http://tenant1.localhost:4200"
+                "chrome-extension://*",
+            "http://tenant1.localhost:4200","http://demo.localhost:4200",
+                "https://103.196.86.35","http://103.196.86.35",
+                "https://demo.103.196.86.35","https://tenant1.103.196.86.35"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
