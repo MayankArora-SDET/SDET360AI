@@ -21,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
 
 @Configuration
@@ -40,14 +41,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
+            .csrf(AbstractHttpConfigurer::disable)  // disable CSRF
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth ->
                 auth.requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/users/tenant/**").permitAll()
-                    .requestMatchers("/api/tenants/**").permitAll()
+                    .requestMatchers("/api/tenants/**").permitAll()    // permit tenants API
                     .requestMatchers("/api/tokens/**").permitAll()
                     .requestMatchers("/api/tokens/record").permitAll()
                     .requestMatchers("/api/tokens/validate").permitAll()
@@ -71,14 +72,22 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
+            
             "http://localhost:4201", 
             "http://sdet360-frontend:80",
+           
             "chrome-extension://nnomjikodbfkmliniolghhafheeccabb",
+            
+                "chrome-extension://*",
             "http://tenant1.localhost:4201"
+        ,"http://demo.localhost:4200",
+                "https://103.196.86.35","http://103.196.86.35","https://3zeb3azkqo7l80-8080.proxy.runpod.net/*",
+                "https://demo.103.196.86.35","https://tenant1.103.196.86.35","https://demo.3zeb3azkqo7l80-8080.proxy.runpod.net"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
