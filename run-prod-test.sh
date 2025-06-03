@@ -219,7 +219,7 @@ build_and_run_docker() {
     fi
     
     echo "Running Docker container..."
-    docker run -d --name sdet360ai -p 4201:4201 -p 8081:8080 -p 8001:8001 -p 50051:50051 -p 5433:5432 sdet360ai:test
+    docker run -d --name sdet360ai -p 4201:4201 -p 8081:8080 -p 8001:8001 -p 50051:50051 -p 5433:5432 sdet360ai
     
     echo "Docker container started!"
     echo "Frontend: http://localhost:4201"

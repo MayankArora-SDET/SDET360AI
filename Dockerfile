@@ -72,8 +72,8 @@ RUN apt-get update && apt-get install -y postgresql postgresql-contrib && rm -rf
 # Install Protocol Buffers compiler
 RUN apt-get update && apt-get install -y protobuf-compiler && rm -rf /var/lib/apt/lists/*
  
-# Install Maven
-RUN apt-get update && apt-get install -y maven && rm -rf /var/lib/apt/lists/*
+# Install Maven and Nginx
+RUN apt-get update && apt-get install -y maven nginx && rm -rf /var/lib/apt/lists/*
  
 # Verify Maven can find Java
 RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
@@ -87,8 +87,6 @@ WORKDIR /app
 # RUN curl -fsSL https://ollama.com/install.sh | sh
 # RUN ollama install llama3.1:70b
 
-  
-  
 # Copy dependency files first to leverage Docker cache
 COPY SDETAIO/package*.json /app/SDETAIO/
 COPY springboot-service/pom.xml /app/springboot-service/
@@ -135,6 +133,12 @@ RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
 WORKDIR /app/SDETAIO
 RUN npm run build
 
+# Configure Nginx
+COPY nginx.conf /etc/nginx/nginx.conf
+RUN mkdir -p /var/www/html && \
+    cp -r /app/SDETAIO/dist/ai/browser/* /var/www/html/ && \
+    chmod -R 755 /var/www/html
+
 # Expose ports
 EXPOSE 4201 8080 8001 50051 5433
  
@@ -144,8 +148,7 @@ RUN echo '#!/bin/bash\n\
 service postgresql start\n\
 cd /app/ai-service && python main.py &\n\
 cd /app/springboot-service && java -jar target/sdet360-0.0.1-SNAPSHOT.jar &\n\
-cd /app/SDETAIO && npx serve -s dist/ai/browser -l 4201\n\
-tail -f /dev/null' > /app/start.sh && \
+exec nginx -g "daemon off;"' > /app/start.sh && \
 chmod +x /app/start.sh
  
 # Set entry point

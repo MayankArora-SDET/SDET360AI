@@ -25,7 +25,7 @@ class ServerConstants:
     LOG_FILE = 'ai_service.log'
     
     # Default values
-    DEFAULT_MODEL = "ollama"
+    DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'grok')
     DEFAULT_METHOD = "GET"
     DEFAULT_CONFIDENCE_SCORE = 1.0
     DEFAULT_TENANT_ID = "unknown"
