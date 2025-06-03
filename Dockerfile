@@ -82,20 +82,22 @@ RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
     mvn -version
  
 # Set up working directory
-WORKDIR /app
- 
-RUN curl -fsSL https://ollama.com/install.sh | sh
-# RUN ollama run llama3.1:70b
- 
+WORKDIR /app 
+
+# RUN curl -fsSL https://ollama.com/install.sh | sh
+# RUN ollama install llama3.1:70b
+
+  
+  
 # Copy dependency files first to leverage Docker cache
 COPY SDETAIO/package*.json /app/SDETAIO/
 COPY springboot-service/pom.xml /app/springboot-service/
-COPY ai-service/requirements.txt /app/ai-service/
- 
+COPY ai-service/requirements.txt /app/ai-service/ 
+
 # Install frontend dependencies
 WORKDIR /app/SDETAIO
 RUN npm install
- 
+  
 # Install backend dependencies
 WORKDIR /app/springboot-service
 RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
@@ -132,7 +134,7 @@ RUN export JAVA_HOME=$(find /opt -name "jdk-*" -type d | head -1) && \
 # Build Angular frontend
 WORKDIR /app/SDETAIO
 RUN npm run build
- 
+
 # Expose ports
 EXPOSE 4201 8080 8001 50051 5433
  
