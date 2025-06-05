@@ -45,7 +45,7 @@ dist/
 /springboot-service/*.jar
 /springboot-service/*.war
 *.class
-
+/node_modules
 
 
 # Gradle
