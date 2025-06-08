@@ -3,12 +3,18 @@ package com.sdet.sdet360.tenant.service;
 import com.sdet.sdet360.grpc.generated.AiRequest;
 import com.sdet.sdet360.grpc.generated.AiResponse;
 import com.sdet.sdet360.grpc.generated.AiServiceGrpc;
+import com.sdet.sdet360.tenant.dto.PromptAutomationResponse;
+import com.sdet.sdet360.tenant.model.AutomationPromptBasedAutomation;
+import com.sdet.sdet360.tenant.model.Feature;
+import com.sdet.sdet360.tenant.repository.FeatureRepository;
+import com.sdet.sdet360.tenant.repository.PromptBasedAutomationRepository;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -18,16 +24,21 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
 @Service
 public class PromptBasedAutomationService {
 
-    private static final String SCRIPT_DIRECTORY = "C:/Generate_script";
+    private static final String BASE_DIRECTORY = System.getProperty("user.home") + "/sdet360/PBA_scriptsAndReports";
 
-    /**
-     * Main method to extract locators, send to Python gRPC server, generate script and run it.
-     */
-    public String generateAndRunRobotScript(String userPrompt, String host, int port) {
+    @Autowired
+    private PromptBasedAutomationRepository automationRepository;
+
+    @Autowired
+    private FeatureRepository featureRepository;
+
+    public PromptAutomationResponse generateAndRunRobotScript(UUID verticalId, String userPrompt, String host, int port, String testCaseId) {
+        String vertical = verticalId.toString();
         String url = extractUrl(userPrompt);
         if (url == null) {
             throw new IllegalArgumentException("No valid URL found in prompt.");
@@ -38,12 +49,40 @@ public class PromptBasedAutomationService {
 
         // Generate the robot script content
         String robotScript = callPromptBasedAutomation(userPrompt, formattedLocators, host, port);
+        String testCaseDir = BASE_DIRECTORY + "/" + testCaseId;
 
-        // Save the script locally
-        String scriptFilePath = saveScriptToFile(robotScript);
+        String scriptPath = saveScriptToFile(robotScript, testCaseId);
+        String outputDir = testCaseDir;
 
-        // Run the script
-        return executeRobotScript(scriptFilePath);
+        String executionStatus = executeRobotScript(scriptPath, testCaseId);
+
+        // Save to DB
+        Feature feature = featureRepository.findByFeatureName(vertical)
+                .orElseGet(() -> {
+                    Feature newFeature = new Feature();
+                    newFeature.setFeatureName(vertical);
+                    return featureRepository.save(newFeature);
+                });
+
+        AutomationPromptBasedAutomation entity = new AutomationPromptBasedAutomation();
+        entity.setFeature(feature);
+        entity.setTestCaseId(testCaseId);
+        entity.setUserPrompt(userPrompt);
+        entity.setGeneratedScript(robotScript);
+        entity.setLogPath(outputDir + "/log.html");
+        entity.setReportPath(outputDir + "/report.html");
+        entity.setOutputPath(outputDir + "/output.xml");
+
+        automationRepository.save(entity);
+
+        return new PromptAutomationResponse(
+                true,
+                executionStatus,
+                testCaseId,
+                outputDir + "/log.html",
+                outputDir + "/report.html",
+                outputDir + "/output.xml"
+        );
     }
 
     private String extractUrl(String prompt) {
@@ -152,52 +191,48 @@ public class PromptBasedAutomationService {
         return result;
     }
 
-    /**
-     * Saves the generated Robot Framework script to a local file
-     */
-    private String saveScriptToFile(String scriptContent) {
+    private String saveScriptToFile(String scriptContent, String testCaseId) {
+        String testCaseDir = BASE_DIRECTORY + "/" + testCaseId;
         try {
-            // Ensure directory exists
-            File scriptDir = new File(SCRIPT_DIRECTORY);
-            if (!scriptDir.exists()) {
-                scriptDir.mkdirs();
+            File dir = new File(testCaseDir);
+            if (!dir.exists() && !dir.mkdirs()) {
+                throw new RuntimeException("Failed to create directory: " + testCaseDir);
             }
 
-            // Generate a unique file name using UUID
-            String filename = "generated_test_" + UUID.randomUUID().toString().substring(0, 8) + ".robot";
-            File scriptFile = new File(scriptDir, filename);
-
+            File scriptFile = new File(dir, "generated_script_" + testCaseId + ".robot");
             try (FileWriter writer = new FileWriter(scriptFile)) {
                 writer.write(scriptContent);
             }
 
             return scriptFile.getAbsolutePath();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save Robot Framework script to file", e);
+            throw new RuntimeException("Failed to write script file", e);
         }
     }
 
-    /**
-     * Executes the Robot Framework script using the robot CLI
-     */
-    private String executeRobotScript(String scriptFilePath) {
+    private String executeRobotScript(String scriptPath, String testCaseId) {
+        String outputDir = BASE_DIRECTORY + "/" + testCaseId;
+
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder("robot", scriptFilePath);
-            Process process = processBuilder.start();
-
-            boolean finished = process.waitFor(60, TimeUnit.SECONDS); // Wait for script execution to finish
-            if (!finished) {
-                return "Script execution timed out";
+            File dir = new File(outputDir);
+            if (!dir.exists() && !dir.mkdirs()) {
+                throw new RuntimeException("Failed to create output directory: " + outputDir);
             }
 
-            int exitCode = process.exitValue();
-            if (exitCode != 0) {
-                return "Script execution failed with exit code: " + exitCode + "\n" + scriptFilePath;
-            }
+            ProcessBuilder pb = new ProcessBuilder("robot", "--outputdir", outputDir, scriptPath);
+            pb.inheritIO();
+            Process process = pb.start();
+            boolean finished = process.waitFor(120, TimeUnit.SECONDS);
 
-            return "Script executed successfully. Output saved at: " + scriptFilePath;
+            if (!finished) return "Execution timed out";
+
+            int code = process.exitValue();
+            return code == 0 ?
+                    "Script executed successfully. Reports saved at: " + outputDir :
+                    "Script failed with exit code: " + code;
+
         } catch (Exception e) {
-            throw new RuntimeException("Error executing the Robot Framework script", e);
+            throw new RuntimeException("Script execution error", e);
         }
     }
 }
