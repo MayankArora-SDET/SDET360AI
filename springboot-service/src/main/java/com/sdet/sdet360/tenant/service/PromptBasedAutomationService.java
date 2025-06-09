@@ -4,6 +4,8 @@ import com.sdet.sdet360.grpc.generated.AiRequest;
 import com.sdet.sdet360.grpc.generated.AiResponse;
 import com.sdet.sdet360.grpc.generated.AiServiceGrpc;
 import com.sdet.sdet360.tenant.dto.PromptAutomationResponse;
+import com.sdet.sdet360.tenant.dto.PromptRequest;
+import com.sdet.sdet360.tenant.dto.PromptStep;
 import com.sdet.sdet360.tenant.model.AutomationPromptBasedAutomation;
 import com.sdet.sdet360.tenant.model.Feature;
 import com.sdet.sdet360.tenant.repository.FeatureRepository;
@@ -37,9 +39,13 @@ public class PromptBasedAutomationService {
     @Autowired
     private FeatureRepository featureRepository;
 
-    public PromptAutomationResponse generateAndRunRobotScript(UUID verticalId, String userPrompt, String host, int port, String testCaseId) {
+    public PromptAutomationResponse generateAndRunRobotScript(UUID verticalId, PromptRequest request, String host, int port) {
         String vertical = verticalId.toString();
-        String url = extractUrl(userPrompt);
+        String testCaseId = request.getTestCaseId();
+        List<PromptStep> steps = request.getSteps();
+        String userPrompt = buildPromptFromSteps(steps);
+
+        String url = request.getUrl();
         if (url == null) {
             throw new IllegalArgumentException("No valid URL found in prompt.");
         }
@@ -85,9 +91,17 @@ public class PromptBasedAutomationService {
         );
     }
 
-    private String extractUrl(String prompt) {
-        Matcher matcher = Pattern.compile("(https?://[^\\s,]+)").matcher(prompt);
-        return matcher.find() ? matcher.group(1) : null;
+    public String buildPromptFromSteps(List<PromptStep> steps) {
+        StringBuilder prompt = new StringBuilder();
+        for (PromptStep step : steps) {
+            prompt.append(" ").append(step.getTestStep())
+                    .append(" ").append(step.getTestData());
+            if (step.getExpectedResult() != null && !step.getExpectedResult().isBlank()) {
+                prompt.append(" ").append(step.getExpectedResult());
+            }
+            prompt.append(", ");
+        }
+        return prompt.toString().trim();
     }
 
     private String fetchHtml(String url) {

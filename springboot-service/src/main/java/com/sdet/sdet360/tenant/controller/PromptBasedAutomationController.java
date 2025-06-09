@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/automation/{verticalId}/testcase/{testCaseId}")
+@RequestMapping("/api/automation/{verticalId}/testcase")
 public class PromptBasedAutomationController {
 
     @Autowired
@@ -19,16 +19,16 @@ public class PromptBasedAutomationController {
     @PostMapping("/generate_robot_script")
     public ResponseEntity<PromptAutomationResponse> generateRobotScriptFromPrompt(
             @PathVariable UUID verticalId,
-            @PathVariable String testCaseId,
+//            @PathVariable String testCaseId,
             @RequestBody PromptRequest request,
             @RequestParam(defaultValue = "localhost") String host,
             @RequestParam(defaultValue = "50051") int port) {
 
-        String prompt = request.getPrompt();
+//        String prompt = request.getPrompt();
 
         try {
             // Service method returns DTO now
-            PromptAutomationResponse response = automationService.generateAndRunRobotScript(verticalId, prompt, host, port, testCaseId);
+            PromptAutomationResponse response = automationService.generateAndRunRobotScript(verticalId, request, host, port);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -36,7 +36,7 @@ public class PromptBasedAutomationController {
             PromptAutomationResponse errorResponse = new PromptAutomationResponse(
                     false,
                     "Script generation failed: " + e.getMessage(),
-                    testCaseId,
+                    request.getTestCaseId(),
                     null,
                     null,
                     null
