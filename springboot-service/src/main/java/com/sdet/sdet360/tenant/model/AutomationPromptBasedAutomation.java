@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name = "automation_prompt_based_automation")
-@AttributeOverride(name = "id", column = @Column(name = "pba_id"))
+//@AttributeOverride(name = "id", column = @Column(name = "pba_id"))
 public class AutomationPromptBasedAutomation extends BaseEntity{
 
     @ManyToOne

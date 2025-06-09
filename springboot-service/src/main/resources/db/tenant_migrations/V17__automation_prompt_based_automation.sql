@@ -1,5 +1,5 @@
   CREATE TABLE automation_prompt_based_automation (
-      pba_id UUID PRIMARY KEY,
+      id UUID PRIMARY KEY,
       feature_id UUID REFERENCES features(feature_id),
       test_case_id VARCHAR NOT NULL,
       user_prompt TEXT NOT NULL,
