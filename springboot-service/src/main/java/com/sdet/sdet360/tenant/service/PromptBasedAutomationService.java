@@ -46,6 +46,8 @@ public class PromptBasedAutomationService {
     public PromptAutomationResponse generateAndRunRobotScript(UUID verticalId, PromptRequest request, String host, int port) {
         String vertical = verticalId.toString();
         String testCaseId = request.getTestCaseId();
+        String category = request.getCategory();
+        String description = request.getDescription();
         List<PromptStep> steps = request.getSteps();
         String userPrompt = buildPromptFromSteps(steps);
 
@@ -246,7 +248,7 @@ public class PromptBasedAutomationService {
 
             int code = process.exitValue();
             return code == 0 ?
-                    "Script executed successfully. Reports saved at: " + outputDir :
+                    "Script executed successfully." :
                     "Script failed with exit code: " + code;
 
         } catch (Exception e) {

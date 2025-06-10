@@ -11,5 +11,6 @@ public class PromptRequest {
     private String testCaseId;
     private String url;
     private String category;
+    private String description;
     private List<PromptStep> steps;
 }
