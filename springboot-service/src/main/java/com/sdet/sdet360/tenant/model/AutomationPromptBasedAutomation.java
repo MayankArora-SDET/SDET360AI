@@ -16,6 +16,9 @@ public class AutomationPromptBasedAutomation extends BaseEntity{
     @Column(name = "test_case_id")
     private String testCaseId;
 
+    @Column(name = "category")
+    private String category;
+
     @Column(name = "user_prompt", columnDefinition = "text")
     private String userPrompt;
 

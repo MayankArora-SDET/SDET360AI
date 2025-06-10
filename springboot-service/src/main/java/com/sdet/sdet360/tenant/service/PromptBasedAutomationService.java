@@ -79,6 +79,7 @@ public class PromptBasedAutomationService {
         AutomationPromptBasedAutomation entity = new AutomationPromptBasedAutomation();
         entity.setFeature(feature);
         entity.setTestCaseId(testCaseId);
+        entity.setCategory(category);
         entity.setUserPrompt(userPrompt);
         entity.setGeneratedScript(robotScript);
         entity.setLogPath(outputDir + "/log.html");
@@ -91,6 +92,7 @@ public class PromptBasedAutomationService {
                 true,
                 executionStatus,
                 testCaseId,
+                category,
                 outputDir + "/log.html",
                 outputDir + "/report.html",
                 outputDir + "/output.xml"

@@ -42,6 +42,7 @@ public class PromptBasedAutomationController {
                     false,
                     "Script generation failed: " + e.getMessage(),
                     request.getTestCaseId(),
+                    request.getCategory(),
                     null,
                     null,
                     null

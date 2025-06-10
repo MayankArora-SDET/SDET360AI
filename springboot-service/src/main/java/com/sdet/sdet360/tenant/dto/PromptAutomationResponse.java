@@ -11,6 +11,7 @@ public class PromptAutomationResponse {
     private boolean success;
     private String message;
     private String testCaseId;
+    private String category;
     private String logPath;
     private String reportPath;
     private String outputPath;
