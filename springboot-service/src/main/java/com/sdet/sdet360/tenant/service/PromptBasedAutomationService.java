@@ -6,10 +6,12 @@ import com.sdet.sdet360.grpc.generated.AiServiceGrpc;
 import com.sdet.sdet360.tenant.dto.PromptAutomationResponse;
 import com.sdet.sdet360.tenant.dto.PromptRequest;
 import com.sdet.sdet360.tenant.dto.PromptStep;
-import com.sdet.sdet360.tenant.model.AutomationPromptBasedAutomation;
+import com.sdet.sdet360.tenant.model.PromptAutomationTestCase;
+import com.sdet.sdet360.tenant.model.PromptAutomationTestStep;
 import com.sdet.sdet360.tenant.model.Feature;
 import com.sdet.sdet360.tenant.repository.FeatureRepository;
-import com.sdet.sdet360.tenant.repository.PromptBasedAutomationRepository;
+import com.sdet.sdet360.tenant.repository.PromptAutomationTestCaseRepository;
+import com.sdet.sdet360.tenant.repository.PromptAutomationTestStepRepository;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.jsoup.Jsoup;
@@ -23,8 +25,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
 import java.util.UUID;
 import java.io.FileInputStream;
@@ -38,7 +38,10 @@ public class PromptBasedAutomationService {
     private static final String BASE_DIRECTORY = System.getProperty("user.home") + "/sdet360/PBA_scriptsAndReports";
 
     @Autowired
-    private PromptBasedAutomationRepository automationRepository;
+    private PromptAutomationTestCaseRepository testCaseRepo;
+
+    @Autowired
+    private PromptAutomationTestStepRepository testStepRepo;
 
     @Autowired
     private FeatureRepository featureRepository;
@@ -76,27 +79,29 @@ public class PromptBasedAutomationService {
                     return featureRepository.save(newFeature);
                 });
 
-        AutomationPromptBasedAutomation entity = new AutomationPromptBasedAutomation();
-        entity.setFeature(feature);
-        entity.setTestCaseId(testCaseId);
-        entity.setCategory(category);
-        entity.setUserPrompt(userPrompt);
-        entity.setGeneratedScript(robotScript);
-        entity.setLogPath(outputDir + "/log.html");
-        entity.setReportPath(outputDir + "/report.html");
-        entity.setOutputPath(outputDir + "/output.xml");
+        PromptAutomationTestCase testCase = new PromptAutomationTestCase();
+        testCase.setFeature(feature);
+        testCase.setTestCaseId(testCaseId);
+        testCase.setCategory(category);
+        testCase.setDescription(description);
+        testCase.setLogPath(outputDir + "/log.html");
+        testCase.setReportPath(outputDir + "/report.html");
+        testCase.setOutputPath(outputDir + "/output.xml");
 
-        automationRepository.save(entity);
+        testCase = testCaseRepo.save(testCase);
 
-        return new PromptAutomationResponse(
-                true,
-                executionStatus,
-                testCaseId,
-                category,
-                outputDir + "/log.html",
-                outputDir + "/report.html",
-                outputDir + "/output.xml"
-        );
+        int stepNo = 1;
+        for (PromptStep step : steps) {
+            PromptAutomationTestStep testStep = new PromptAutomationTestStep();
+            testStep.setTestCase(testCase);
+            testStep.setStepNumber(stepNo++);
+            testStep.setTestStep(step.getTestStep());
+            testStep.setTestData(step.getTestData());
+            testStep.setExpectedResult(step.getExpectedResult());
+            testStepRepo.save(testStep);
+        }
+
+        return new PromptAutomationResponse(testCaseId, executionStatus);
     }
 
     public String buildPromptFromSteps(List<PromptStep> steps) {

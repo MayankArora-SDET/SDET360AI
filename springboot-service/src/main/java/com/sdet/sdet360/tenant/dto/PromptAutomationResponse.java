@@ -15,4 +15,10 @@ public class PromptAutomationResponse {
     private String logPath;
     private String reportPath;
     private String outputPath;
+
+    public PromptAutomationResponse(String testCaseId, String message) {
+        this.success = message != null && message.toLowerCase().contains("success");
+        this.message = message;
+        this.testCaseId = testCaseId;
+    }
 }

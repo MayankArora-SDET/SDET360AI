@@ -32,8 +32,8 @@ public class PromptBasedAutomationController {
 //        String prompt = request.getPrompt();
 
         try {
-            // Service method returns DTO now
-            PromptAutomationResponse response = automationService.generateAndRunRobotScript(verticalId, request, host, port);
+            PromptAutomationResponse response =
+                    automationService.generateAndRunRobotScript(verticalId, request, host, port);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {

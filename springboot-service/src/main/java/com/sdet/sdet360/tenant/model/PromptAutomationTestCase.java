@@ -2,12 +2,12 @@ package com.sdet.sdet360.tenant.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.util.List;
 
 @Data
 @Entity
-@Table(name = "automation_prompt_based_automation")
-//@AttributeOverride(name = "id", column = @Column(name = "pba_id"))
-public class AutomationPromptBasedAutomation extends BaseEntity{
+@Table(name = "prompt_automation_test_cases")
+public class PromptAutomationTestCase extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "feature_id")
@@ -19,11 +19,8 @@ public class AutomationPromptBasedAutomation extends BaseEntity{
     @Column(name = "category")
     private String category;
 
-    @Column(name = "user_prompt", columnDefinition = "text")
-    private String userPrompt;
-
-    @Column(name = "generated_script", columnDefinition = "text")
-    private String generatedScript;
+    @Column(name = "description", columnDefinition = "text")
+    private String description;
 
     @Column(name = "log_path", columnDefinition = "text")
     private String logPath;
@@ -33,4 +30,7 @@ public class AutomationPromptBasedAutomation extends BaseEntity{
 
     @Column(name = "output_path", columnDefinition = "text")
     private String outputPath;
+
+    @OneToMany(mappedBy = "testCase", cascade = CascadeType.ALL)
+    private List<PromptAutomationTestStep> steps;
 }
