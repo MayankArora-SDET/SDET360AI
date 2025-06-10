@@ -101,7 +101,10 @@ public class PromptBasedAutomationService {
             testStepRepo.save(testStep);
         }
 
-        return new PromptAutomationResponse(testCaseId, executionStatus);
+        return new PromptAutomationResponse(
+                executionStatus.toLowerCase().contains("success"),
+                executionStatus
+        );
     }
 
     public String buildPromptFromSteps(List<PromptStep> steps) {

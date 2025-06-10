@@ -40,12 +40,7 @@ public class PromptBasedAutomationController {
             // Error response still in JSON
             PromptAutomationResponse errorResponse = new PromptAutomationResponse(
                     false,
-                    "Script generation failed: " + e.getMessage(),
-                    request.getTestCaseId(),
-                    request.getCategory(),
-                    null,
-                    null,
-                    null
+                    "Script generation failed: " + e.getMessage()
             );
             return ResponseEntity.ok(errorResponse);
         }

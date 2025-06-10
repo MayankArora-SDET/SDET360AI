@@ -10,15 +10,4 @@ import lombok.AllArgsConstructor;
 public class PromptAutomationResponse {
     private boolean success;
     private String message;
-    private String testCaseId;
-    private String category;
-    private String logPath;
-    private String reportPath;
-    private String outputPath;
-
-    public PromptAutomationResponse(String testCaseId, String message) {
-        this.success = message != null && message.toLowerCase().contains("success");
-        this.message = message;
-        this.testCaseId = testCaseId;
-    }
 }
