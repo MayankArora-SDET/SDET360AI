@@ -27,6 +27,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
 import java.util.UUID;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public class PromptBasedAutomationService {
@@ -249,4 +253,48 @@ public class PromptBasedAutomationService {
             throw new RuntimeException("Script execution error", e);
         }
     }
+
+    public File createZipForTestCase(String testCaseId) {
+        String testCaseDirPath = BASE_DIRECTORY + "/" + testCaseId;
+        File testCaseDir = new File(testCaseDirPath);
+
+        if (!testCaseDir.exists() || !testCaseDir.isDirectory()) {
+            throw new RuntimeException("Test case folder does not exist for ID: " + testCaseId);
+        }
+
+        File zipFile = new File(BASE_DIRECTORY + "/" + testCaseId + ".zip");
+
+        try (FileOutputStream fos = new FileOutputStream(zipFile);
+             ZipOutputStream zos = new ZipOutputStream(fos)) {
+
+            zipFolder(testCaseDir, testCaseDir.getName(), zos);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error zipping test case folder", e);
+        }
+
+        return zipFile;
+    }
+
+    private void zipFolder(File folder, String parentFolder, ZipOutputStream zos) throws IOException {
+        for (File file : Objects.requireNonNull(folder.listFiles())) {
+            if (file.isDirectory()) {
+                zipFolder(file, parentFolder + "/" + file.getName(), zos);
+            } else {
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    ZipEntry zipEntry = new ZipEntry(parentFolder + "/" + file.getName());
+                    zos.putNextEntry(zipEntry);
+
+                    byte[] bytes = new byte[1024];
+                    int length;
+                    while ((length = fis.read(bytes)) >= 0) {
+                        zos.write(bytes, 0, length);
+                    }
+
+                    zos.closeEntry();
+                }
+            }
+        }
+    }
+
 }

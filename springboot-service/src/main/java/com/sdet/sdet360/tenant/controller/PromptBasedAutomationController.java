@@ -4,9 +4,14 @@ import com.sdet.sdet360.tenant.dto.PromptRequest;
 import com.sdet.sdet360.tenant.dto.PromptAutomationResponse;
 import com.sdet.sdet360.tenant.service.PromptBasedAutomationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.UUID;
 
 @RestController
@@ -42,6 +47,25 @@ public class PromptBasedAutomationController {
                     null
             );
             return ResponseEntity.ok(errorResponse);
+        }
+    }
+
+    @GetMapping("/download-test-case")
+    public ResponseEntity<?> downloadTestCaseArtifacts(
+            @PathVariable UUID verticalId,
+            @RequestParam String testCaseId) {
+        try {
+            File zipFile = automationService.createZipForTestCase(testCaseId);
+            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + zipFile.getName())
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentLength(zipFile.length())
+                    .body(resource);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Download failed: " + e.getMessage());
         }
     }
 }
