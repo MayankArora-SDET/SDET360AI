@@ -1,7 +1,8 @@
 package com.sdet.sdet360.tenant.controller;
 
-import com.sdet.sdet360.tenant.dto.PromptRequest;
-import com.sdet.sdet360.tenant.dto.PromptAutomationResponse;
+import com.sdet.sdet360.tenant.dto.*;
+import com.sdet.sdet360.tenant.model.*;
+import com.sdet.sdet360.tenant.repository.*;
 import com.sdet.sdet360.tenant.service.PromptBasedAutomationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/automation/{verticalId}/testcase")
@@ -20,6 +21,15 @@ public class PromptBasedAutomationController {
 
     @Autowired
     private PromptBasedAutomationService automationService;
+
+    @Autowired
+    private FeatureRepository featureRepository;
+
+    @Autowired
+    private PromptAutomationTestCaseRepository testCaseRepo;
+
+    @Autowired
+    private PromptAutomationTestStepRepository testStepRepo;
 
     @PostMapping("/generate_robot_script")
     public ResponseEntity<PromptAutomationResponse> generateRobotScriptFromPrompt(
@@ -63,5 +73,51 @@ public class PromptBasedAutomationController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Download failed: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/recorded-prompt-automation-test-cases")
+    public ResponseEntity<List<PromptAutomationTestCaseDto>> getRecordedPromptAutomationTestCases(@PathVariable UUID verticalId) {
+        String vertical = verticalId.toString();
+
+        Optional<Feature> featureOpt = featureRepository.findByFeatureName(vertical);
+        if (featureOpt.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        Feature feature = featureOpt.get();
+
+        // fetch all test cases
+        List<PromptAutomationTestCase> testCases = testCaseRepo.findAll();
+
+        // filter test cases that belong to the found feature
+        List<PromptAutomationTestCase> filteredCases = new ArrayList<>();
+        for (PromptAutomationTestCase testCase : testCases) {
+            if (testCase.getFeature().getId().equals(feature.getId())) {
+                filteredCases.add(testCase);
+            }
+        }
+
+        // prepare response list
+        List<PromptAutomationTestCaseDto> response = filteredCases.stream().map(testCase -> {
+            PromptAutomationTestCaseDto dto = new PromptAutomationTestCaseDto();
+            dto.setTestCaseId(testCase.getTestCaseId());
+            dto.setCategory(testCase.getCategory());
+            dto.setDescription(testCase.getDescription());
+
+            List<PromptAutomationTestStep> steps = testStepRepo.findByTestCase_Id(testCase.getId());
+            List<PromptAutomationTestStepDto> stepDtos = steps.stream().map(step -> {
+                PromptAutomationTestStepDto stepDto = new PromptAutomationTestStepDto();
+                stepDto.setStepNumber(step.getStepNumber());
+                stepDto.setTestStep(step.getTestStep());
+                stepDto.setTestData(step.getTestData());
+                stepDto.setExpectedResult(step.getExpectedResult());
+                return stepDto;
+            }).toList();
+
+            dto.setSteps(stepDtos);
+            return dto;
+        }).toList();
+
+        return ResponseEntity.ok(response);
     }
 }
