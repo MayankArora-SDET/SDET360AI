@@ -46,8 +46,9 @@ public class PromptBasedAutomationService {
     @Autowired
     private FeatureRepository featureRepository;
 
-    public PromptAutomationResponse generateAndRunRobotScript(UUID verticalId, PromptRequest request, String host, int port) {
+    public PromptAutomationResponse generateAndRunScript(UUID verticalId, PromptRequest request, String host, int port) {
         String vertical = verticalId.toString();
+        String selectedTool = request.getTool();
         String testCaseId = request.getTestCaseId();
         String category = request.getCategory();
         String description = request.getDescription();
@@ -62,14 +63,29 @@ public class PromptBasedAutomationService {
         String html = fetchHtml(url);
         String formattedLocators = extractFormattedLocators(html);
 
-        // Generate the robot script content
-        String robotScript = callPromptBasedAutomation(userPrompt, formattedLocators, host, port);
-        String testCaseDir = BASE_DIRECTORY + "/" + testCaseId;
+        // Generate script via grpc
+        String scriptContent  = callPromptBasedAutomation(userPrompt, formattedLocators, selectedTool, host, port);
+        String scriptPath = saveScriptToFile(scriptContent, testCaseId, selectedTool);
 
-        String scriptPath = saveScriptToFile(robotScript, testCaseId);
-        String outputDir = testCaseDir;
+        String executionStatus;
+        switch (selectedTool.toLowerCase()){
+            case "robot":
+                executionStatus = executeRobotScript(scriptPath, testCaseId);
+                break;
 
-        String executionStatus = executeRobotScript(scriptPath, testCaseId);
+            case "selenium":
+            case "selenium-python":
+                executionStatus = executeSeleniumPythonScript(scriptPath, testCaseId);
+                break;
+
+            case "selenium-java":
+                String projectPath = System.getProperty("user.dir");;
+                String mainClassName = "com.sdet.sdet360.Sdet360Application";
+                executionStatus = executeSeleniumJava(projectPath, mainClassName, testCaseId);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported automation tool: " + selectedTool);
+        }
 
         // Save to DB
         Feature feature = featureRepository.findByFeatureName(vertical)
@@ -84,9 +100,9 @@ public class PromptBasedAutomationService {
         testCase.setTestCaseId(testCaseId);
         testCase.setCategory(category);
         testCase.setDescription(description);
-        testCase.setLogPath(outputDir + "/log.html");
-        testCase.setReportPath(outputDir + "/report.html");
-        testCase.setOutputPath(outputDir + "/output.xml");
+        testCase.setLogPath(BASE_DIRECTORY + "/" + testCaseId + "/log.html");
+        testCase.setReportPath(BASE_DIRECTORY + "/" + testCaseId + "/report.html");
+        testCase.setOutputPath(BASE_DIRECTORY + "/" + testCaseId + "/output.xml");
 
         testCase = testCaseRepo.save(testCase);
 
@@ -200,7 +216,7 @@ public class PromptBasedAutomationService {
     /**
      * Makes the gRPC call to the AI microservice with raw prompt and extracted locators
      */
-    private String callPromptBasedAutomation(String userPrompt, String formattedLocators,
+    private String callPromptBasedAutomation(String userPrompt, String formattedLocators, String selectedTool,
                                              String host, int port) {
         ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
         AiServiceGrpc.AiServiceBlockingStub stub = AiServiceGrpc.newBlockingStub(channel);
@@ -208,6 +224,7 @@ public class PromptBasedAutomationService {
         AiRequest req = AiRequest.newBuilder()
                 .putParameters("user_prompt", userPrompt)
                 .putParameters("formatted_locators", formattedLocators)
+                .putParameters("tool", selectedTool)
                 .build();
 
         AiResponse response = stub.promptBasedAutomation(req);
@@ -221,7 +238,7 @@ public class PromptBasedAutomationService {
         return result;
     }
 
-    private String saveScriptToFile(String scriptContent, String testCaseId) {
+    private String saveScriptToFile(String scriptContent, String testCaseId, String tool) {
         String testCaseDir = BASE_DIRECTORY + "/" + testCaseId;
         try {
             File dir = new File(testCaseDir);
@@ -229,7 +246,18 @@ public class PromptBasedAutomationService {
                 throw new RuntimeException("Failed to create directory: " + testCaseDir);
             }
 
-            File scriptFile = new File(dir, "generated_script_" + testCaseId + ".robot");
+            String extension;
+
+            if (tool.equalsIgnoreCase("robot")) {
+                extension = ".robot";
+            } else if (tool.equalsIgnoreCase("selenium-python")) {
+                extension = ".py";
+            } else if (tool.equalsIgnoreCase("selenium-java")) {
+                extension = ".java";
+            } else {
+                throw new IllegalArgumentException("Unsupported tool for script saving: " + tool);
+            }
+            File scriptFile = new File(dir, "generated_script_" + testCaseId + extension);
             try (FileWriter writer = new FileWriter(scriptFile)) {
                 writer.write(scriptContent);
             }
@@ -265,6 +293,68 @@ public class PromptBasedAutomationService {
             throw new RuntimeException("Script execution error", e);
         }
     }
+
+    private String executeSeleniumPythonScript(String scriptPath, String testCaseId) {
+        String outputDir = BASE_DIRECTORY + "/" + testCaseId;
+
+        try {
+            File dir = new File(outputDir);
+            if (!dir.exists() && !dir.mkdirs()) {
+                throw new RuntimeException("Failed to create output directory: " + outputDir);
+            }
+
+            ProcessBuilder pb = new ProcessBuilder("python", scriptPath);
+            pb.directory(new File(outputDir));
+            pb.inheritIO();
+            Process process = pb.start();
+            boolean finished = process.waitFor(120, TimeUnit.SECONDS);
+
+            if (!finished) return "Execution timed out";
+
+            int code = process.exitValue();
+            return code == 0 ?
+                    "Script executed successfully." :
+                    "Script failed with exit code: " + code;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Script execution error", e);
+        }
+    }
+
+    private String executeSeleniumJava(String projectPath, String mainClassName, String testCaseId) {
+        String outputDir = BASE_DIRECTORY + "/" + testCaseId;
+
+        try {
+            File dir = new File(outputDir);
+            if (!dir.exists() && !dir.mkdirs()) {
+                throw new RuntimeException("Failed to create output directory: " + outputDir);
+            }
+
+            // Step: Run Maven command to compile and execute the class with main method
+            ProcessBuilder pb = new ProcessBuilder(
+                    "mvn",
+                    "compile",
+                    "exec:java",
+                    "-Dexec.mainClass=" + mainClassName
+            );
+
+            pb.directory(new File(projectPath)); // Project directory where pom.xml exists
+            pb.inheritIO(); // Log Maven output to console
+            Process process = pb.start();
+            boolean finished = process.waitFor(120, TimeUnit.SECONDS);
+
+            if (!finished) return "Execution timed out";
+
+            int code = process.exitValue();
+            return code == 0 ?
+                    "Script executed successfully." :
+                    "Script failed with exit code: " + code;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Script execution error", e);
+        }
+    }
+
 
     public File createZipForTestCase(String testCaseId) {
         String testCaseDirPath = BASE_DIRECTORY + "/" + testCaseId;

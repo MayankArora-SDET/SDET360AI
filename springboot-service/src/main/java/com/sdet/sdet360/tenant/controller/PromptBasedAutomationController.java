@@ -31,19 +31,21 @@ public class PromptBasedAutomationController {
     @Autowired
     private PromptAutomationTestStepRepository testStepRepo;
 
-    @PostMapping("/generate_robot_script")
+    @PostMapping("/generate-script")
     public ResponseEntity<PromptAutomationResponse> generateRobotScriptFromPrompt(
             @PathVariable UUID verticalId,
-//            @PathVariable String testCaseId,
             @RequestBody PromptRequest request,
             @RequestParam(defaultValue = "localhost") String host,
             @RequestParam(defaultValue = "50051") int port) {
 
-//        String prompt = request.getPrompt();
-
         try {
+            // set default tool as robot
+            if(request.getTool() == null || request.getTool().isBlank()){
+                request.setTool("robot");
+            }
+
             PromptAutomationResponse response =
-                    automationService.generateAndRunRobotScript(verticalId, request, host, port);
+                    automationService.generateAndRunScript(verticalId, request, host, port);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {

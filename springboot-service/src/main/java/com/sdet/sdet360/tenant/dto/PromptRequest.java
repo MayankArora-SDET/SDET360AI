@@ -8,6 +8,7 @@ import java.util.List;
 @Getter
 @Setter
 public class PromptRequest {
+    private String tool;
     private String testCaseId;
     private String url;
     private String category;
