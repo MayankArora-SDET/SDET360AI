@@ -9,6 +9,7 @@ sys.modules['ai_service_pb2'] = gen_pb2
 from app.generated import ai_service_pb2_grpc, ai_service_pb2
 from app.llm import prompt_templates
 from app.llm.client_factory import LLMClientFactory
+from app.llm.prompt_templates import ROBOT_PROMPT_TEMPLATE, SELENIUM_PYTHON_PROMPT_TEMPLATE
 
 class AiServiceServicer(ai_service_pb2_grpc.AiServiceServicer):
     def GenerateResponseForCodeGeneratorWithText(self, request, context):
@@ -273,34 +274,35 @@ Ensure that:
         logging.info(f"Received user prompt for automation: {request}")
         user_prompt = request.parameters.get("user_prompt", "")
         formatted_locators = request.parameters.get("formatted_locators", "")
+        selected_tool = request.parameters.get("tool", "robot").strip().lower()
 
         metadata = {"template_name": "PROMPT_BASED_AUTOMATION"}
 
-        # Final Prompt
-        prompt = f"""
-    User Instructions:
-    {user_prompt}
+        if selected_tool == "robot":
+            prompt = ROBOT_PROMPT_TEMPLATE.format(
+                user_prompt = user_prompt,
+                formatted_locators = formatted_locators
+            )
 
-    Locators:
-    {formatted_locators}
+        elif selected_tool == "selenium-python":
+            prompt = SELENIUM_PYTHON_PROMPT_TEMPLATE.format(
+                user_prompt = user_prompt,
+                formatted_locators = formatted_locators
+            )
 
-    Generate a complete Robot Framework script that strictly follows the exact sequence of actions provided in the user_instructions. Do not reorder, omit, or infer any steps. Use the given locators exactly as specified, with 'xpath=' included where applicable.
-    Before performing any action on an element, add a 'Wait Until Element Is Visible' step using the same locator.
-    Locators must be used exactly as retrieved from the source URL, preserving original casing and formatting, without any alterations such as capitalization or lowercasing.
-    This requirement applies to both the full XPath and all attribute values within it. Do not modify attribute values (e.g., do not change 'male' to 'Male') under any circumstances.
-    Set the Selenium execution speed to 0.1 seconds using the appropriate Robot Framework keyword at the beginning of the test case.
-    The script must be minimal and contain only:
-    *** Settings ***
-    Library           SeleniumLibrary
+        elif selected_tool == "selenium-java":
+            prompt = SELENIUM_PYTHON_PROMPT_TEMPLATE.format(
+                user_prompt = user_prompt,
+                formatted_locators = formatted_locators
+            )
 
-    *** Test Cases ***
-    [Test Case Name]
-    [Sequence of Robot Framework keywords with inputs as specified]
-    No explanations, markdown, or comments. Output must be plain Robot Framework code only, directly executable.
-    """
+        else:
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details(f"Unsupported tool: {selected_tool}")
+            return ai_service_pb2.AiResponse()
 
         try:
-            client = LLMClientFactory.get_client("ollama")
+            client = LLMClientFactory.get_client("grok")
             ai_text = client.chat([{"role": "user", "content": prompt}])
         except Exception as e:
             logging.error(f"LLM error: {str(e)}")

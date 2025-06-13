@@ -1,7 +1,7 @@
 from langchain_ollama import OllamaLLM
 
 class OllamaClient:
-    def __init__(self, model: str = "llama3.1:70b"):
+    def __init__(self, model: str = "llama3.1:8b"):
         self.client = OllamaLLM(model=model)
 
     def chat(self, messages: list) -> str:

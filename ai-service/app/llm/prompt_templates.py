@@ -417,3 +417,68 @@ Example Inputs:
 - **Body**: {body}
 """
 )
+
+
+ROBOT_PROMPT_TEMPLATE = """
+User Instructions:
+{user_prompt}
+
+Locators:
+{formatted_locators}
+
+Generate a complete Robot Framework script that strictly follows the exact sequence of actions provided in the user_instructions. Do not reorder, omit, or infer any steps. Use the given locators exactly as specified, with 'xpath=' included where applicable.
+Before performing any action on an element, add a 'Wait Until Element Is Visible' step using the same locator.
+Locators must be used exactly as retrieved from the source URL, preserving original casing and formatting, without any alterations such as capitalization or lowercasing.
+This requirement applies to both the full XPath and all attribute values within it. Do not modify attribute values (e.g., do not change 'male' to 'Male') under any circumstances.
+Set the Selenium execution speed to 0.1 seconds using the appropriate Robot Framework keyword at the beginning of the test case.
+The script must be minimal and contain only:
+*** Settings ***
+Library           SeleniumLibrary
+
+*** Test Cases ***
+[Test Case Name]
+[Sequence of Robot Framework keywords with inputs as specified]
+No explanations, markdown, or comments. Output must be plain Robot Framework code only, directly executable.
+"""
+
+SELENIUM_PYTHON_PROMPT_TEMPLATE = """
+User Instructions:
+{user_prompt}
+
+Locators:
+{formatted_locators}
+
+Generate a complete Selenium script in Python that strictly follows the exact sequence of actions provided in the user_instructions.
+Do not reorder, omit, or infer any steps. Use the given locators exactly as specified, with 'xpath=' included where applicable.
+Before performing any action on an element, add an explicit wait using WebDriverWait with EC.visibility_of_element_located, using the same locator exactly as given.
+Locators must be used exactly as retrieved from the source URL, preserving original casing and formatting, without any alterations such as capitalization or lowercasing.
+Do not modify attribute values (e.g., do not change 'male' to 'Male') under any circumstances.
+Set the Selenium execution speed to 0.1 seconds by adding a time.sleep(0.1) between each step.
+The script must be minimal and contain only the necessary imports, browser setup, execution of the exact steps in sequence, and browser teardown.
+Do not use markdown formatting in the output.
+Do not include any backticks (` or ```) or comments.
+Do not prefix the code with `python`.
+The output must be a plain executable Python script only.
+"""
+
+SELENIUM_JAVA_PROMPT_TEMPLATE = """
+User Instructions:
+{user_prompt}
+
+Locators:
+{formatted_locators}
+Generate a complete Selenium Java test script that strictly follows the exact sequence of actions provided in the user_instructions. 
+Do not reorder, omit, or infer any steps. Use the given locators exactly as specified, including full XPath values 
+with 'xpath=' if included in the source. Preserve original casing and formatting of all locator strings and attribute values — 
+do not modify, capitalize, or lowercase any part of them.
+Before performing any action on a web element, insert an explicit wait that waits until the element is visible using the exact 
+locator provided. Do not use implicit waits or Thread.sleep(). The wait must strictly use WebDriverWait with ExpectedConditions.visibilityOfElementLocated().
+Set a short execution delay (e.g., 100 milliseconds) between actions to simulate user interaction speed.
+The script must be minimal and contain only:
+Import statements
+Class definition
+main method or appropriate test method inside a test framework like JUnit/TestNG (based on user_instructions)
+WebDriver setup and teardown
+The exact sequence of actions from the instructions, strictly in order
+Do not add comments, explanations, or modify any data. Output must be plain, directly executable Java code using Selenium WebDriver.
+"""
